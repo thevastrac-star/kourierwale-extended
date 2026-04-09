@@ -18,7 +18,7 @@ services:
       - key: JWT_EXPIRES_IN
         value: 7d
       - key: BACKEND_URL
-        sync: false          # Set to https://kourierwale-api.onrender.com after first deploy
+        value: https://kourierwale.onrender.com
     healthCheckPath: /health
     autoDeploy: true
 

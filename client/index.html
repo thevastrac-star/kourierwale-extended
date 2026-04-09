@@ -496,7 +496,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--primary);box-shadow:0
 <script>
 const API = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
   ? 'http://localhost:5000/api'
-  : '/api';
+  : 'https://kourierwale.onrender.com/api';
 
 let token = localStorage.getItem('client_token');
 let currentUser = JSON.parse(localStorage.getItem('client_user') || '{}');

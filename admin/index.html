@@ -580,7 +580,7 @@ textarea{resize:vertical;min-height:80px}
 <script>
 const API = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
   ? 'http://localhost:5000/api'
-  : '/api';
+  : 'https://kourierwale.onrender.com/api';
 
 let token = localStorage.getItem('admin_token');
 let currentUser = JSON.parse(localStorage.getItem('admin_user') || '{}');

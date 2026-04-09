@@ -10,16 +10,18 @@ async function seed() {
   console.log('✅ Connected to MongoDB');
 
   // ── Users ────────────────────────────────────────────────────────────────
-  const adminExists = await User.findOne({ email: 'admin@kourierwale.com' });
+  const adminEmail = process.env.ADMIN_EMAIL || 'admin@kourierwale.com';
+  const adminPassword = process.env.ADMIN_PASSWORD || 'Admin@123456';
+  const adminExists = await User.findOne({ email: adminEmail });
   if (!adminExists) {
     await User.create({
       name: 'Super Admin',
-      email: 'admin@kourierwale.com',
-      password: 'admin123',
+      email: adminEmail,
+      password: adminPassword,
       role: 'admin',
       kyc: { status: 'approved' }
     });
-    console.log('✅ Admin user created  →  admin@kourierwale.com / admin123');
+    console.log(`✅ Admin user created  →  ${adminEmail} / [password from env]`);
   }
 
   const clientExists = await User.findOne({ email: 'client@test.com' });
