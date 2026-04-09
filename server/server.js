@@ -13,17 +13,30 @@ const app = express();
 
 // ─── MIDDLEWARE ───────────────────────────────────────────────────────────────
 app.use(cors({ origin: '*', credentials: true }));
-app.use(helmet({ crossOriginResourcePolicy: false }));
+app.use(helmet({ crossOriginResourcePolicy: false, contentSecurityPolicy: false }));
 app.use(morgan('dev'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Static uploads
+// ─── STATIC FILES ─────────────────────────────────────────────────────────────
+// Create upload directories if they don't exist
 const uploadDirs = ['uploads/kyc', 'uploads/bulk'];
 uploadDirs.forEach(d => { if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true }); });
+
+// Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// ─── ROUTES ───────────────────────────────────────────────────────────────────
+// Serve frontend HTML files from /public
+app.use(express.static(path.join(__dirname, 'public')));
+
+// ─── FRONTEND ROUTES ──────────────────────────────────────────────────────────
+// These let users visit clean URLs like /admin, /client, /login
+app.get('/',        (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
+app.get('/login',   (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
+app.get('/admin',   (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'index.html')));
+app.get('/client',  (req, res) => res.sendFile(path.join(__dirname, 'public', 'client', 'index.html')));
+
+// ─── API ROUTES ───────────────────────────────────────────────────────────────
 app.use('/api/auth',          require('./routes/auth'));
 app.use('/api/wallet',        require('./routes/wallet'));
 app.use('/api/kyc',           require('./routes/kyc'));
@@ -38,8 +51,13 @@ app.use('/api/settings',      require('./routes/settings'));
 app.use('/api/analytics',     require('./routes/analytics'));
 app.use('/api/notifications', require('./routes/notifications'));
 
-// Health check
+// ─── HEALTH CHECK ─────────────────────────────────────────────────────────────
 app.get('/health', (req, res) => res.json({ status: 'ok', time: new Date() }));
+
+// ─── 404 FALLBACK ─────────────────────────────────────────────────────────────
+app.use((req, res) => {
+  res.status(404).json({ success: false, message: `Route ${req.originalUrl} not found` });
+});
 
 // ─── DATABASE + AUTO-SEED ─────────────────────────────────────────────────────
 const autoSeed = require('./config/autoSeed');
@@ -50,7 +68,6 @@ mongoose.connect(process.env.MONGO_URI, {
 })
 .then(async () => {
   console.log('✅ MongoDB connected');
-  // Auto-seed runs after DB is ready — safe on every restart (idempotent)
   await autoSeed();
 })
 .catch(err => console.error('❌ MongoDB error:', err));
@@ -69,14 +86,18 @@ const keepAlive = () => {
   });
 };
 
-// Start pinging 10s after boot (gives DB time to connect first)
 setTimeout(() => {
   setInterval(keepAlive, PING_INTERVAL);
   console.log('🔔 Keep-alive pinger started (every 7 min)');
 }, 10000);
 
-// ─── START ────────────────────────────────────────────────────────────────────
+// ─── START SERVER ─────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🌐 Login    → ${BACKEND_URL}/login`);
+  console.log(`🛠  Admin   → ${BACKEND_URL}/admin`);
+  console.log(`👤 Client  → ${BACKEND_URL}/client`);
+});
 
 module.exports = app;
