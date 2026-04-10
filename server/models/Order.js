@@ -44,6 +44,7 @@ const OrderSchema = new mongoose.Schema({
   awbNumber: { type: String },
   trackingUrl: { type: String },
   shippingCharge: { type: Number, default: 0 },
+  walletDeducted: { type: Boolean, default: false },  // prevent double-deduction
 
   // Courier preference from user
   courierPreference: { type: mongoose.Schema.Types.ObjectId, ref: 'CourierPreference' },

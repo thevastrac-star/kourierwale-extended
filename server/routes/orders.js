@@ -23,7 +23,7 @@ async function calcShippingCost(userId, courierId, weight, paymentMode, codAmoun
   // Look for per-client rate first, fall back to global
   let rate = await ShippingRate.findOne({ courier: courierId, user: userId, isActive: true });
   if (!rate) rate = await ShippingRate.findOne({ courier: courierId, user: null, isActive: true });
-  if (!rate) return { cost: 0, codCharge: 0, total: 0 };
+  if (!rate) return { cost: null, codCharge: 0, total: 0, noRate: true };
 
   // Use zone D as default domestic rate
   const baseRate = rate.zones.d || rate.zones.a || 0;
@@ -114,6 +114,9 @@ router.post('/', protect, async (req, res) => {
     let shippingCharge = 0, codCharge = 0;
     if (resolvedCourierId) {
       const costResult = await calcShippingCost(req.user._id, resolvedCourierId, pkg?.weight || 0.5, paymentMode, cod);
+      if (costResult.noRate) {
+        return res.status(400).json({ success: false, message: 'No shipping rate configured for the selected courier. Please contact support.' });
+      }
       shippingCharge = costResult.total;
       codCharge = costResult.codCharge;
     }
@@ -146,6 +149,8 @@ router.post('/', protect, async (req, res) => {
         description: `Shipping charge for ${order.orderId}`,
         reference: order.orderId
       });
+      order.walletDeducted = true;
+      await order.save();
     }
 
     // Generate mock AWB (in real integration this comes from courier API)
@@ -266,9 +271,51 @@ router.patch('/:id/ship', protect, async (req, res) => {
     if (order.status !== 'draft' && order.status !== 'processing') {
       return res.status(400).json({ success: false, message: `Cannot ship order in status: ${order.status}` });
     }
+
+    const user = await User.findById(req.user._id);
+
+    // If courierId provided in body, assign and calculate cost
+    const courierId = req.body.courierId || order.assignedCourier;
+    let shippingCharge = order.shippingCharge || 0;
+
+    if (courierId && !order.shippingCharge) {
+      // Only calculate if not already charged at creation
+      const costResult = await calcShippingCost(
+        req.user._id, courierId,
+        order.package?.weight || 0.5,
+        order.paymentMode, order.codAmount || 0
+      );
+      if (costResult.noRate) {
+        return res.status(400).json({ success: false, message: 'No shipping rate configured for this courier. Contact admin.' });
+      }
+      shippingCharge = costResult.total;
+    }
+
+    // Deduct wallet if charge > 0 and not already deducted
+    if (shippingCharge > 0 && !order.walletDeducted) {
+      if (user.walletBalance < shippingCharge) {
+        return res.status(400).json({
+          success: false,
+          message: `Insufficient wallet balance. Need ₹${shippingCharge}, have ₹${user.walletBalance.toFixed(2)}`
+        });
+      }
+      user.walletBalance -= shippingCharge;
+      await user.save();
+      await WalletTransaction.create({
+        user: req.user._id, type: 'debit', amount: shippingCharge,
+        balance: user.walletBalance,
+        description: `Shipping charge for ${order.orderId}`,
+        reference: order.orderId
+      });
+      order.shippingCharge = shippingCharge;
+      order.walletDeducted = true;
+    }
+
+    // Assign courier if provided
+    if (courierId) order.assignedCourier = courierId;
+
     order.status = 'shipped';
     if (!order.awbNumber) {
-      // Generate AWB with courier code prefix if courier assigned
       let prefix = 'AWB';
       if (order.assignedCourier) {
         try {
@@ -279,10 +326,12 @@ router.patch('/:id/ship', protect, async (req, res) => {
       order.awbNumber = `${prefix}${Date.now()}${Math.floor(Math.random() * 9000 + 1000)}`;
     }
     await order.save();
-    const user = await User.findById(req.user._id);
+
     await createNotification(req.user._id, 'shipped', 'Order Shipped',
-      `Order ${order.orderId} shipped with AWB: ${order.awbNumber}`, order._id, user.whatsappNotifications);
-    res.json({ success: true, order });
+      `Order ${order.orderId} shipped with AWB: ${order.awbNumber}. Charged ₹${shippingCharge}`, order._id, user.whatsappNotifications);
+
+    const populated = await Order.findById(order._id).populate('assignedCourier', 'name code');
+    res.json({ success: true, order: populated, shippingCharge });
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 });
 

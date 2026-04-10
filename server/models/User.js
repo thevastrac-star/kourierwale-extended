@@ -54,6 +54,9 @@ const UserSchema = new mongoose.Schema({
     }
   },
 
+  // Per-customer courier lock/unlock (array of courier ObjectIds that are LOCKED for this user)
+  lockedCouriers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Courier' }],
+
   // Impersonation
   tempLoginToken: { type: String },
   tempLoginExpiry: { type: Date },

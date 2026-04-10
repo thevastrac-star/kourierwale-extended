@@ -6,11 +6,16 @@ const { protect, adminOnly, logActivity } = require('../middleware/auth');
 
 // ─── COURIERS ─────────────────────────────────────────────────────────────────
 
-// GET /api/couriers  – list (active only for clients, all for admin)
+// GET /api/couriers  – list (active only for clients, excluding locked for that client; all for admin)
 router.get('/', protect, async (req, res) => {
   try {
     const filter = req.user.role !== 'admin' ? { isActive: true } : {};
-    const couriers = await Courier.find(filter).select('-apiConfig');
+    let couriers = await Courier.find(filter).select('-apiConfig');
+    if (req.user.role !== 'admin') {
+      const user = await User.findById(req.user._id).select('lockedCouriers');
+      const locked = (user.lockedCouriers || []).map(c => c.toString());
+      if (locked.length) couriers = couriers.filter(c => !locked.includes(c._id.toString()));
+    }
     res.json({ success: true, couriers });
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 });
@@ -156,6 +161,40 @@ router.get('/rates/clients-list', protect, adminOnly, async (req, res) => {
   try {
     const clients = await User.find({ role: 'client' }).select('name email').sort({ name: 1 });
     res.json({ success: true, clients });
+  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+});
+
+// ─── COURIER LOCK / UNLOCK PER CUSTOMER ─────────────────────────────────────
+
+// GET /api/couriers/locks/:userId  – get locked couriers for a user
+router.get('/locks/:userId', protect, adminOnly, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId).select('name email lockedCouriers').populate('lockedCouriers', 'name code');
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    res.json({ success: true, lockedCouriers: user.lockedCouriers || [] });
+  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+});
+
+// POST /api/couriers/locks/:userId/toggle  – lock or unlock a courier for a user
+router.post('/locks/:userId/toggle', protect, adminOnly, async (req, res) => {
+  try {
+    const { courierId } = req.body;
+    if (!courierId) return res.status(400).json({ success: false, message: 'courierId required' });
+    const user = await User.findById(req.params.userId);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    if (!user.lockedCouriers) user.lockedCouriers = [];
+    const idx = user.lockedCouriers.findIndex(c => c.toString() === courierId);
+    let action;
+    if (idx >= 0) {
+      user.lockedCouriers.splice(idx, 1);
+      action = 'unlocked';
+    } else {
+      user.lockedCouriers.push(courierId);
+      action = 'locked';
+    }
+    await user.save();
+    await logActivity(req.user._id, 'admin', `COURIER_${action.toUpperCase()}_FOR_USER`, 'User', user._id, { courierId }, req.ip);
+    res.json({ success: true, action, lockedCouriers: user.lockedCouriers });
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 });
 

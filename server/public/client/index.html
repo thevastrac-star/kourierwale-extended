@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Kourierwale – Client Panel</title>
+<title>SHIPORAX – Client Panel</title>
 <style>
 :root{--primary:#059669;--primary-dark:#047857;--info:#0891b2;--danger:#dc2626;--warning:#d97706;--bg:#f0fdf4;--sidebar:#064e3b;--sidebar-text:#6ee7b7;--white:#fff;--border:#d1fae5;--text:#0f172a;--text-muted:#64748b;--radius:10px;--shadow:0 1px 3px rgba(0,0,0,.08)}
 *{box-sizing:border-box;margin:0;padding:0}body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh}
@@ -90,7 +90,7 @@ input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:var(--pr
 </head>
 <body>
 <div id="sidebar">
-  <div class="logo">📦 <span>Kourier</span>wale</div>
+  <div class="logo">📦 <span>SHIPO</span>RAX</div>
   <div class="nav-section">Overview</div>
   <div class="nav-item active" onclick="navigate('dashboard')">📊 Dashboard</div>
   <div class="nav-section">Orders</div>
@@ -860,10 +860,108 @@ function updateBulkActions() {
   document.getElementById('selected-count').textContent = n + ' selected';
 }
 
+let somSelectedCourierId = null;
+let somCurrentOrder = null;
+
 async function shipOrder(id) {
-  const d = await api('PATCH', `/orders/${id}/ship`);
-  if (d?.success) { toast('Order shipped! AWB: ' + d.order.awbNumber, 'success'); loadOrders(); loadWalletBalance(); }
-  else toast(d?.message || 'Error', 'error');
+  // Fetch the order details
+  const d = await api('GET', `/orders/${id}`);
+  if (!d?.success) { toast('Could not load order', 'error'); return; }
+  const o = d.order;
+  somCurrentOrder = o;
+  somSelectedCourierId = null;
+
+  // Show order info
+  document.getElementById('som-order-id').value = id;
+  document.getElementById('som-order-info').innerHTML =
+    `<b>Order: ${o.orderId}</b> &nbsp;|&nbsp; ${o.recipient?.name} &nbsp;|&nbsp; ${o.recipient?.city || ''} ${o.recipient?.pincode || ''}
+     &nbsp;|&nbsp; <span class="status s-${o.paymentMode}">${o.paymentMode==='cod'?'COD ₹'+o.codAmount:'Prepaid'}</span>
+     &nbsp;|&nbsp; Weight: ${o.package?.weight || 0.5} kg`;
+
+  // Load couriers
+  const cd = await api('GET', '/couriers');
+  const somBox = document.getElementById('som-couriers');
+  if (!cd?.success || !cd.couriers.length) {
+    somBox.innerHTML = '<p style="color:#dc2626;font-size:.85rem">No couriers available. Please contact admin.</p>';
+  } else {
+    somBox.innerHTML = cd.couriers.map(c => `
+      <div class="courier-card" id="som-cc-${c._id}" onclick="somSelectCourier('${c._id}','${c.name}',${o.package?.weight||0.5},'${o.paymentMode}',${o.codAmount||0})" style="cursor:pointer;border:2px solid var(--border);border-radius:10px;padding:10px;position:relative;transition:.15s">
+        <div style="display:flex;align-items:center;gap:8px">
+          ${c.logoUrl?`<img src="${c.logoUrl}" height="24" style="border-radius:4px"/>`:'<span style="font-size:1.2rem">🚚</span>'}
+          <span style="font-weight:700;font-size:.85rem">${c.name}</span>
+        </div>
+        <div style="font-size:.72rem;color:#64748b;margin-top:4px">${c.code||''}</div>
+        <div class="check" style="position:absolute;top:8px;right:8px;width:20px;height:20px;border-radius:50%;background:var(--primary);color:#fff;display:none;align-items:center;justify-content:center;font-size:.75rem">✓</div>
+      </div>`).join('');
+  }
+
+  // Reset cost box
+  document.getElementById('som-cost-box').style.display = 'none';
+  document.getElementById('som-confirm-btn').disabled = true;
+
+  // Load wallet balance
+  const wb = await api('GET', '/wallet/balance');
+  document.getElementById('som-wallet-bal').textContent = (wb?.balance || 0).toFixed(2);
+
+  openModal('ship-order-modal');
+}
+
+async function somSelectCourier(courierId, courierName, weight, paymentMode, codAmount) {
+  // Deselect all
+  document.querySelectorAll('#som-couriers .courier-card').forEach(el => {
+    el.style.borderColor = 'var(--border)';
+    el.style.background = '';
+    const chk = el.querySelector('.check'); if(chk) chk.style.display='none';
+  });
+  // Select clicked
+  const card = document.getElementById(`som-cc-${courierId}`);
+  if (card) {
+    card.style.borderColor = 'var(--primary)';
+    card.style.background = '#f0fdf4';
+    const chk = card.querySelector('.check'); if(chk) chk.style.display='flex';
+  }
+  somSelectedCourierId = courierId;
+
+  // Fetch cost
+  const d = await api('GET', `/orders/calc-cost?courierId=${courierId}&weight=${weight}&paymentMode=${paymentMode}&codAmount=${codAmount}`);
+  if (d?.success) {
+    document.getElementById('som-cost-shipping').textContent = '₹' + (d.cost || 0);
+    document.getElementById('som-cost-cod').textContent = '₹' + (d.codCharge || 0);
+    document.getElementById('som-cost-total').textContent = '₹' + (d.total || 0);
+    document.getElementById('som-cost-box').style.display = 'block';
+    document.getElementById('som-confirm-btn').disabled = false;
+    // Warn if wallet insufficient
+    const bal = parseFloat(document.getElementById('som-wallet-bal').textContent) || 0;
+    if (d.total > bal) {
+      document.getElementById('som-confirm-btn').disabled = true;
+      document.getElementById('som-confirm-btn').textContent = '⚠️ Insufficient Wallet Balance';
+    } else {
+      document.getElementById('som-confirm-btn').disabled = false;
+      document.getElementById('som-confirm-btn').textContent = '🚀 Confirm & Deduct Wallet';
+    }
+  } else if (d?.noRate) {
+    toast('No rate configured for this courier. Contact admin.', 'error');
+    document.getElementById('som-confirm-btn').disabled = true;
+  }
+}
+
+async function confirmShipOrder() {
+  const id = document.getElementById('som-order-id').value;
+  if (!somSelectedCourierId) { toast('Please select a courier', 'error'); return; }
+  const btn = document.getElementById('som-confirm-btn');
+  btn.disabled = true; btn.textContent = 'Processing...';
+
+  // First assign courier + update order, then ship
+  const d = await api('PATCH', `/orders/${id}/ship`, { courierId: somSelectedCourierId });
+  if (d?.success) {
+    toast(`✅ Order shipped! AWB: ${d.order.awbNumber}. Wallet deducted ₹${d.shippingCharge||0}`, 'success');
+    closeModal('ship-order-modal');
+    loadOrders();
+    loadWalletBalance();
+  } else {
+    toast(d?.message || 'Error shipping order', 'error');
+    btn.disabled = false; btn.textContent = '🚀 Confirm & Deduct Wallet';
+  }
 }
 async function bulkShipSelected() {
   if (!selectedOrders.size) return;
@@ -1159,5 +1257,34 @@ function renderPagination(containerId, current, total, onClick) {
 function logout() { localStorage.removeItem('client_token'); localStorage.removeItem('client_user'); window.location.href = '/client/login'; }
 pageLoaders.settings = loadSettings;
 </script>
+<!-- ═══ SHIP ORDER MODAL ═══ -->
+<div class="modal" id="ship-order-modal">
+  <div class="modal-box" style="max-width:580px">
+    <div class="modal-header">
+      <span class="modal-title">🚀 Ship Order</span>
+      <button class="close-btn" onclick="closeModal('ship-order-modal')">✕</button>
+    </div>
+    <input type="hidden" id="som-order-id"/>
+    <div id="som-order-info" style="background:#f0fdf4;border-radius:8px;padding:12px;margin-bottom:14px;font-size:.85rem"></div>
+    <div style="margin-bottom:14px">
+      <div style="font-weight:700;font-size:.85rem;margin-bottom:8px;color:#374151">Select Courier</div>
+      <div id="som-couriers" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
+    </div>
+    <div id="som-cost-box" style="display:none;background:#eff6ff;border-radius:8px;padding:12px;margin-bottom:14px;font-size:.875rem">
+      <div style="font-weight:700;color:#1d4ed8;margin-bottom:6px">💰 Shipping Cost Estimate</div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap">
+        <span>Shipping: <b id="som-cost-shipping">₹0</b></span>
+        <span>COD Charge: <b id="som-cost-cod">₹0</b></span>
+        <span style="color:#059669;font-weight:700">Total: <b id="som-cost-total">₹0</b></span>
+      </div>
+      <div style="margin-top:6px;color:#64748b;font-size:.78rem">Wallet Balance: ₹<span id="som-wallet-bal">0</span></div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-outline" onclick="closeModal('ship-order-modal')">Cancel</button>
+      <button class="btn btn-primary" id="som-confirm-btn" onclick="confirmShipOrder()" disabled>🚀 Confirm & Deduct Wallet</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
