@@ -4,205 +4,385 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>SHIPORAX – Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0f172a 0%,#1e3a8a 50%,#1e293b 100%)}
-.wrapper{display:flex;gap:40px;align-items:stretch;max-width:860px;width:100%;padding:20px}
-.panel{background:#fff;border-radius:20px;padding:40px;flex:1;box-shadow:0 25px 60px rgba(0,0,0,.35);display:flex;flex-direction:column}
-.panel-header{text-align:center;margin-bottom:32px}
-.panel-icon{width:64px;height:64px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:1.8rem;margin:0 auto 12px}
-.admin-icon{background:linear-gradient(135deg,#7c3aed,#2563eb)}
-.client-icon{background:linear-gradient(135deg,#059669,#0891b2)}
-.panel-header h2{font-size:1.5rem;font-weight:700;color:#0f172a}
-.panel-header p{color:#64748b;font-size:.875rem;margin-top:4px}
-.divider{height:1px;background:linear-gradient(to right,transparent,#e2e8f0,transparent);margin:20px 0}
+body{
+  font-family:'Inter',sans-serif;min-height:100vh;
+  display:flex;align-items:center;justify-content:center;
+  background:#060614;overflow:hidden;position:relative;
+}
+
+/* BG */
+.bg{position:fixed;inset:0;z-index:0;
+  background:radial-gradient(ellipse at 15% 40%,#2a0a5e60 0%,transparent 55%),
+             radial-gradient(ellipse at 85% 20%,#0a205e50 0%,transparent 50%),
+             radial-gradient(ellipse at 50% 90%,#0a3020 0%,transparent 50%),
+             #06060F;
+}
+.orb{position:absolute;border-radius:50%;filter:blur(90px);animation:float 9s ease-in-out infinite;}
+.o1{width:600px;height:600px;background:radial-gradient(#7C3AED30,transparent);top:-150px;left:-150px}
+.o2{width:500px;height:500px;background:radial-gradient(#FF6B3525,transparent);bottom:-100px;right:-100px;animation-delay:-4s}
+.o3{width:350px;height:350px;background:radial-gradient(#00C9A720,transparent);top:30%;left:30%;animation-delay:-7s}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-35px)}}
+
+.grid{position:fixed;inset:0;z-index:1;
+  background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
+  background-size:70px 70px;
+}
+
+/* PARTICLES */
+.particles{position:fixed;inset:0;z-index:2;pointer-events:none}
+.particle{position:absolute;border-radius:50%;animation:rise 12s linear infinite;}
+@keyframes rise{
+  0%{transform:translateY(100vh);opacity:0}
+  10%{opacity:.8}90%{opacity:.2}100%{transform:translateY(-5vh);opacity:0}
+}
+
+/* CONTENT */
+.page{position:relative;z-index:10;width:100%;max-width:960px;padding:20px;}
+
+/* TOP LOGO */
+.top-logo{text-align:center;margin-bottom:36px;}
+.top-logo .brand{display:inline-flex;align-items:center;gap:14px;}
+.brand-icon{
+  width:60px;height:60px;border-radius:18px;
+  background:linear-gradient(135deg,#FF6B35,#FF8C42);
+  display:flex;align-items:center;justify-content:center;font-size:1.8rem;
+  box-shadow:0 12px 32px #FF6B3560;
+}
+.brand-name{font-size:2rem;font-weight:900;color:#fff;letter-spacing:-.03em}
+.brand-name em{color:#FF6B35;font-style:normal}
+.tagline{color:rgba(255,255,255,.35);font-size:.85rem;margin-top:6px;font-weight:500}
+
+/* PANELS ROW */
+.panels{display:flex;gap:24px;align-items:stretch;}
+
+/* GLASS PANEL */
+.panel{
+  flex:1;
+  background:rgba(255,255,255,.04);
+  backdrop-filter:blur(32px);
+  -webkit-backdrop-filter:blur(32px);
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:28px;
+  padding:36px 32px;
+  box-shadow:0 32px 80px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.12);
+  position:relative;overflow:hidden;
+  transition:transform .35s ease,box-shadow .35s ease;
+}
+.panel:hover{transform:translateY(-5px);box-shadow:0 48px 96px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.18)}
+.panel::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:28px 28px 0 0;}
+.admin-panel::before{background:linear-gradient(90deg,#7C3AED,#2563EB,#00C9A7)}
+.client-panel::before{background:linear-gradient(90deg,#FF6B35,#FF8C42,#FFCC00)}
+
+/* PANEL HEADER */
+.ph{text-align:center;margin-bottom:28px}
+.pi{
+  width:80px;height:80px;border-radius:22px;margin:0 auto 16px;
+  display:flex;align-items:center;justify-content:center;font-size:2.2rem;
+  position:relative;
+}
+.pi-admin{
+  background:linear-gradient(135deg,#7C3AED18,#2563EB18);
+  border:1.5px solid #7C3AED50;
+  box-shadow:0 0 0 8px #7C3AED0D,0 16px 40px #7C3AED28;
+}
+.pi-client{
+  background:linear-gradient(135deg,#FF6B3518,#FF8C4218);
+  border:1.5px solid #FF6B3550;
+  box-shadow:0 0 0 8px #FF6B350D,0 16px 40px #FF6B3528;
+}
+.ph h2{font-size:1.7rem;font-weight:800;color:#fff;letter-spacing:-.025em}
+.ph p{color:rgba(255,255,255,.45);font-size:.88rem;margin-top:5px}
+.badge{
+  display:inline-block;margin-top:10px;padding:5px 14px;border-radius:999px;
+  font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;
+}
+.badge-admin{background:#7C3AED15;color:#A78BFA;border:1px solid #7C3AED45}
+.badge-client{background:#FF6B3515;color:#FFB347;border:1px solid #FF6B3545}
+
+/* FORM */
 .form-group{margin-bottom:16px}
-label{display:block;font-size:.8rem;font-weight:600;color:#374151;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em}
-input{width:100%;padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:.9rem;outline:none;transition:.2s;background:#f8fafc}
-input:focus{border-color:#2563eb;background:#fff;box-shadow:0 0 0 3px rgba(37,99,235,.1)}
-.btn{width:100%;padding:13px;border:none;border-radius:10px;font-size:.95rem;font-weight:700;cursor:pointer;transition:.2s;margin-top:4px;letter-spacing:.02em}
-.btn-admin{background:linear-gradient(135deg,#7c3aed,#2563eb);color:#fff}
-.btn-admin:hover{opacity:.9;transform:translateY(-1px)}
-.btn-client{background:linear-gradient(135deg,#059669,#0891b2);color:#fff}
-.btn-client:hover{opacity:.9;transform:translateY(-1px)}
-.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
-.error{background:#fee2e2;color:#991b1b;padding:10px 14px;border-radius:8px;font-size:.8rem;margin-bottom:12px;display:none;border-left:3px solid #dc2626}
-.separator{text-align:center;color:#94a3b8;font-size:.75rem;margin:16px 0;position:relative}
-.separator::before{content:'';position:absolute;top:50%;left:0;right:0;height:1px;background:#e2e8f0}
-.separator span{background:#fff;padding:0 10px;position:relative}
-.badge{display:inline-block;background:#f0fdf4;color:#166534;font-size:.7rem;font-weight:600;padding:3px 8px;border-radius:999px;border:1px solid #bbf7d0;margin-top:8px}
-@media(max-width:640px){.wrapper{flex-direction:column;gap:20px}.panel{padding:28px}}
+label{
+  display:block;font-size:.78rem;font-weight:600;
+  color:rgba(255,255,255,.55);margin-bottom:7px;
+  text-transform:uppercase;letter-spacing:.07em;
+}
+input{
+  width:100%;padding:16px 18px;
+  border:1.5px solid rgba(255,255,255,.1);border-radius:13px;
+  font-size:1rem;outline:none;
+  background:rgba(255,255,255,.06);color:#fff;
+  transition:.25s;font-family:'Inter',sans-serif;
+}
+input::placeholder{color:rgba(255,255,255,.25)}
+input:focus{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.3);}
+.admin-panel input:focus{border-color:#7C3AED80;box-shadow:0 0 0 4px #7C3AED12}
+.client-panel input:focus{border-color:#FF6B3570;box-shadow:0 0 0 4px #FF6B3512}
+
+/* BUTTON */
+.btn{
+  width:100%;padding:18px;border:none;border-radius:14px;
+  font-size:1.05rem;font-weight:700;cursor:pointer;
+  transition:.25s;font-family:'Inter',sans-serif;
+  letter-spacing:.01em;position:relative;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.btn::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(rgba(255,255,255,.18),transparent);
+  opacity:0;transition:.25s;
+}
+.btn:hover::before{opacity:1}
+.btn:hover{transform:translateY(-2px)}
+.btn:active{transform:translateY(0)}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none!important}
+
+.btn-admin{
+  background:linear-gradient(135deg,#7C3AED,#2563EB);color:#fff;
+  box-shadow:0 8px 28px #7C3AED55;margin-top:6px;
+}
+.btn-admin:hover{box-shadow:0 14px 36px #7C3AED70}
+.btn-client{
+  background:linear-gradient(135deg,#FF6B35,#FF8C42);color:#fff;
+  box-shadow:0 8px 28px #FF6B3555;margin-top:6px;
+}
+.btn-client:hover{box-shadow:0 14px 36px #FF6B3570}
+.btn-ghost{
+  background:rgba(255,255,255,.07);color:rgba(255,255,255,.75);
+  border:1.5px solid rgba(255,255,255,.12);margin-top:10px;
+}
+.btn-ghost:hover{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.22)}
+
+/* ERROR */
+.error{
+  background:#FF000018;color:#FF9090;padding:12px 16px;border-radius:10px;
+  font-size:.85rem;margin-bottom:14px;display:none;border-left:3px solid #FF4444;
+}
+
+/* DIVIDER */
+.sep{text-align:center;color:rgba(255,255,255,.25);font-size:.75rem;margin:14px 0;position:relative}
+.sep::before{content:'';position:absolute;top:50%;left:0;right:0;height:1px;background:rgba(255,255,255,.08)}
+.sep span{padding:0 12px;position:relative;background:transparent}
+
+/* REGISTER FORM */
+#reg-form{margin-top:16px;border-top:1px solid rgba(255,255,255,.08);padding-top:16px;display:none}
+#reg-form .form-group{margin-bottom:12px}
+#reg-form label{font-size:.72rem}
+#reg-form input{padding:14px 16px;font-size:.95rem;border-radius:12px}
+.reg-hint{text-align:center;font-size:.82rem;color:rgba(255,255,255,.35);margin-top:14px}
+.reg-hint a{color:#FF6B35;font-weight:600;cursor:pointer;text-decoration:none}
+.reg-hint a:hover{text-decoration:underline}
+
+@media(max-width:680px){
+  .panels{flex-direction:column}
+  .panel{padding:26px 22px}
+  .btn{padding:20px;font-size:1.1rem}
+  input{padding:17px 16px;font-size:1rem}
+  .pi{width:70px;height:70px;font-size:1.9rem}
+}
 </style>
 </head>
 <body>
-<div class="wrapper">
-  <!-- ADMIN LOGIN -->
-  <div class="panel">
-    <div class="panel-header">
-      <div class="panel-icon admin-icon">🛠️</div>
-      <h2>Admin Panel</h2>
-      <p>Manage the entire platform</p>
+<div class="bg"><div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div></div>
+<div class="grid"></div>
+<div class="particles" id="pts"></div>
+
+<div class="page">
+  <div class="top-logo">
+    <div class="brand">
+      <div class="brand-icon">🚀</div>
+      <div>
+        <div class="brand-name">Shipo<em>RAX</em></div>
+        <div class="tagline">India's Smartest Shipping Platform</div>
+      </div>
     </div>
-    <div class="error" id="admin-error"></div>
-    <div class="form-group">
-      <label>Admin Email</label>
-      <input type="email" id="admin-email" placeholder="admin@shiporax.com" autocomplete="username"/>
-    </div>
-    <div class="form-group">
-      <label>Password</label>
-      <input type="password" id="admin-password" placeholder="Enter password" autocomplete="current-password"
-        onkeydown="if(event.key==='Enter')loginAdmin()"/>
-    </div>
-    <button class="btn btn-admin" id="admin-btn" onclick="loginAdmin()">🔐 Login to Admin</button>
   </div>
 
-  <!-- CLIENT LOGIN -->
-  <div class="panel">
-    <div class="panel-header">
-      <div class="panel-icon client-icon">📦</div>
-      <h2>Client Panel</h2>
-      <p>Ship orders & manage shipments</p>
-    </div>
-    <div class="error" id="client-error"></div>
-    <div class="form-group">
-      <label>Email Address</label>
-      <input type="email" id="client-email" placeholder="you@company.com" autocomplete="username"/>
-    </div>
-    <div class="form-group">
-      <label>Password</label>
-      <input type="password" id="client-password" placeholder="Enter password" autocomplete="current-password"
-        onkeydown="if(event.key==='Enter')loginClient()"/>
-    </div>
-    <button class="btn btn-client" id="client-btn" onclick="loginClient()">🚀 Login to Client Panel</button>
-    <div class="separator"><span>Don't have an account?</span></div>
-    <button class="btn" style="background:#f1f5f9;color:#374151;font-weight:600" onclick="toggleRegister()">📝 Register New Account</button>
-    <div id="register-form" style="display:none;margin-top:16px">
-      <div class="divider"></div>
+  <div class="panels">
+
+    <!-- ADMIN -->
+    <div class="panel admin-panel">
+      <div class="ph">
+        <div class="pi pi-admin">🛠️</div>
+        <h2>Admin Panel</h2>
+        <p>Manage orders, users &amp; platform settings</p>
+        <div class="badge badge-admin">🔐 Admin Only</div>
+      </div>
+      <div class="error" id="admin-error"></div>
       <div class="form-group">
-        <label>Full Name</label>
-        <input type="text" id="reg-name" placeholder="Your full name"/>
+        <label>Admin Email</label>
+        <input type="email" id="admin-email" placeholder="admin@shiporax.com" autocomplete="username"/>
       </div>
       <div class="form-group">
-        <label>Phone</label>
-        <input type="tel" id="reg-phone" placeholder="10-digit mobile number" maxlength="10"/>
+        <label>Password</label>
+        <input type="password" id="admin-password" placeholder="Enter your password"
+          onkeydown="if(event.key==='Enter')loginAdmin()"/>
       </div>
-      <button class="btn btn-client" onclick="registerClient()">✅ Create Account</button>
+      <button class="btn btn-admin" id="admin-btn" onclick="loginAdmin()">
+        🔐 &nbsp;Login to Admin Panel
+      </button>
+    </div>
+
+    <!-- CLIENT -->
+    <div class="panel client-panel">
+      <div class="ph">
+        <div class="pi pi-client">📦</div>
+        <h2>Client Login</h2>
+        <p>Ship smarter — manage all your orders</p>
+        <div class="badge badge-client">🚚 Seller &amp; Business Login</div>
+      </div>
+      <div class="error" id="client-error"></div>
+      <div class="form-group">
+        <label>Your Email</label>
+        <input type="email" id="client-email" placeholder="you@yourcompany.com" autocomplete="username"/>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="client-password" placeholder="Enter your password"
+          onkeydown="if(event.key==='Enter')loginClient()"/>
+      </div>
+      <button class="btn btn-client" id="client-btn" onclick="loginClient()">
+        🚀 &nbsp;Login to My Account
+      </button>
+
+      <div class="reg-hint">
+        New here? <a onclick="toggleRegister()">Create a free account →</a>
+      </div>
+
+      <div id="reg-form">
+        <div class="form-group">
+          <label>Full Name *</label>
+          <input type="text" id="reg-name" placeholder="e.g. Ramesh Kumar"/>
+        </div>
+        <div class="form-group">
+          <label>Company / Shop Name *</label>
+          <input type="text" id="reg-company" placeholder="e.g. Kumar Traders, MyShop"/>
+        </div>
+        <div class="form-group">
+          <label>Email Address *</label>
+          <input type="email" id="reg-email" placeholder="your@email.com"/>
+        </div>
+        <div class="form-group">
+          <label>Mobile Number</label>
+          <input type="tel" id="reg-phone" placeholder="10-digit mobile number" maxlength="10"/>
+        </div>
+        <div class="form-group">
+          <label>Create Password *</label>
+          <input type="password" id="reg-password" placeholder="Minimum 6 characters"/>
+        </div>
+        <button class="btn btn-client" onclick="registerClient()">
+          ✅ &nbsp;Create Account — It's Free!
+        </button>
+        <div class="reg-hint" style="margin-top:10px">
+          Already have account? <a onclick="toggleRegister()">Login instead →</a>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
 <script>
-const API = '/api';
+const API='/api';
 
-// Redirect if already logged in
-window.onload = () => {
-  const adminToken = localStorage.getItem('admin_token');
-  const clientToken = localStorage.getItem('client_token');
-  if (adminToken) window.location.href = '/admin';
-  else if (clientToken) window.location.href = '/client';
+window.onload=()=>{
+  if(localStorage.getItem('admin_token')) window.location.href='/admin';
+  else if(localStorage.getItem('client_token')) window.location.href='/client';
+  spawnParticles();
 };
 
-function showError(id, msg) {
-  const el = document.getElementById(id);
-  el.textContent = msg;
-  el.style.display = 'block';
-  setTimeout(() => el.style.display = 'none', 5000);
-}
-
-function setLoading(btnId, loading) {
-  const btn = document.getElementById(btnId);
-  btn.disabled = loading;
-  btn.textContent = loading ? 'Please wait...' : btn.getAttribute('data-text') || btn.textContent;
-}
-
-async function loginAdmin() {
-  const email = document.getElementById('admin-email').value.trim();
-  const password = document.getElementById('admin-password').value;
-  if (!email || !password) { showError('admin-error', 'Please enter email and password'); return; }
-
-  document.getElementById('admin-btn').disabled = true;
-  document.getElementById('admin-btn').textContent = 'Logging in...';
-
-  try {
-    const res = await fetch(`${API}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
-    });
-    const d = await res.json();
-    if (d.success && d.user.role === 'admin') {
-      localStorage.setItem('admin_token', d.token);
-      localStorage.setItem('admin_user', JSON.stringify(d.user));
-      window.location.href = '/admin';
-    } else if (d.success && d.user.role !== 'admin') {
-      showError('admin-error', 'This account does not have admin access');
-    } else {
-      showError('admin-error', d.message || 'Invalid credentials');
-    }
-  } catch (e) {
-    showError('admin-error', 'Network error. Please try again.');
+function spawnParticles(){
+  const c=document.getElementById('pts');
+  const cols=['#FF6B35','#00C9A7','#7C3AED','#FF8C42','#2563EB','#FFCC00'];
+  for(let i=0;i<28;i++){
+    const d=document.createElement('div');
+    d.className='particle';
+    d.style.cssText=`left:${Math.random()*100}vw;width:${2+Math.random()*3}px;height:${2+Math.random()*3}px;background:${cols[Math.floor(Math.random()*cols.length)]};animation-delay:${Math.random()*12}s;animation-duration:${9+Math.random()*8}s`;
+    c.appendChild(d);
   }
-  document.getElementById('admin-btn').disabled = false;
-  document.getElementById('admin-btn').textContent = '🔐 Login to Admin';
 }
 
-async function loginClient() {
-  const email = document.getElementById('client-email').value.trim();
-  const password = document.getElementById('client-password').value;
-  if (!email || !password) { showError('client-error', 'Please enter email and password'); return; }
+function showErr(id,msg){
+  const e=document.getElementById(id);
+  e.textContent=msg;e.style.display='block';
+  setTimeout(()=>e.style.display='none',5500);
+}
+function setBtn(id,loading,txt){
+  const b=document.getElementById(id);
+  b.disabled=loading;
+  if(!loading)b.textContent=txt;
+  else b.textContent='⏳  Please wait...';
+}
 
-  document.getElementById('client-btn').disabled = true;
-  document.getElementById('client-btn').textContent = 'Logging in...';
-
-  try {
-    const res = await fetch(`${API}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
-    });
-    const d = await res.json();
-    if (d.success && d.user.role === 'client') {
-      localStorage.setItem('client_token', d.token);
-      localStorage.setItem('client_user', JSON.stringify(d.user));
-      window.location.href = '/client';
-    } else if (d.success && d.user.role !== 'client') {
-      showError('client-error', 'Use Admin Login for admin accounts');
-    } else {
-      showError('client-error', d.message || 'Invalid credentials');
+async function loginAdmin(){
+  const email=document.getElementById('admin-email').value.trim();
+  const password=document.getElementById('admin-password').value;
+  if(!email||!password){showErr('admin-error','⚠️ Please enter your email and password');return;}
+  setBtn('admin-btn',true);
+  try{
+    const r=await fetch(`${API}/auth/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})});
+    const d=await r.json();
+    if(d.success&&d.user.role==='admin'){
+      localStorage.setItem('admin_token',d.token);
+      localStorage.setItem('admin_user',JSON.stringify(d.user));
+      window.location.href='/admin';
+    }else if(d.success&&d.user.role!=='admin'){
+      showErr('admin-error','⚠️ This is a client account. Use Client Login on the right.');
+    }else{
+      showErr('admin-error','❌ '+(d.message||'Wrong email or password'));
     }
-  } catch (e) {
-    showError('client-error', 'Network error. Please try again.');
-  }
-  document.getElementById('client-btn').disabled = false;
-  document.getElementById('client-btn').textContent = '🚀 Login to Client Panel';
+  }catch(e){showErr('admin-error','🔌 Network error. Please try again.');}
+  setBtn('admin-btn',false,'🔐  Login to Admin Panel');
 }
 
-function toggleRegister() {
-  const f = document.getElementById('register-form');
-  f.style.display = f.style.display === 'none' ? 'block' : 'none';
-}
-
-async function registerClient() {
-  const name = document.getElementById('reg-name').value.trim();
-  const email = document.getElementById('client-email').value.trim();
-  const password = document.getElementById('client-password').value;
-  const phone = document.getElementById('reg-phone').value.trim();
-  if (!name || !email || !password) { showError('client-error', 'Name, email and password are required'); return; }
-  try {
-    const res = await fetch(`${API}/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password, phone, role: 'client' })
-    });
-    const d = await res.json();
-    if (d.success) {
-      localStorage.setItem('client_token', d.token);
-      localStorage.setItem('client_user', JSON.stringify(d.user));
-      window.location.href = '/client';
-    } else {
-      showError('client-error', d.message || 'Registration failed');
+async function loginClient(){
+  const email=document.getElementById('client-email').value.trim();
+  const password=document.getElementById('client-password').value;
+  if(!email||!password){showErr('client-error','⚠️ Please enter your email and password');return;}
+  setBtn('client-btn',true);
+  try{
+    const r=await fetch(`${API}/auth/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})});
+    const d=await r.json();
+    if(d.success&&d.user.role==='client'){
+      localStorage.setItem('client_token',d.token);
+      localStorage.setItem('client_user',JSON.stringify(d.user));
+      window.location.href='/client';
+    }else if(d.success&&d.user.role!=='client'){
+      showErr('client-error','⚠️ Admin account detected. Please use Admin Login on the left.');
+    }else{
+      showErr('client-error','❌ '+(d.message||'Wrong email or password'));
     }
-  } catch (e) { showError('client-error', 'Network error'); }
+  }catch(e){showErr('client-error','🔌 Network error. Please try again.');}
+  setBtn('client-btn',false,'🚀  Login to My Account');
+}
+
+function toggleRegister(){
+  const f=document.getElementById('reg-form');
+  const hint=document.querySelector('.reg-hint');
+  const show=f.style.display==='none'||!f.style.display;
+  f.style.display=show?'block':'none';
+}
+
+async function registerClient(){
+  const name=document.getElementById('reg-name').value.trim();
+  const company=document.getElementById('reg-company').value.trim();
+  const email=document.getElementById('reg-email').value.trim();
+  const phone=document.getElementById('reg-phone').value.trim();
+  const password=document.getElementById('reg-password').value;
+  if(!name||!email||!password){showErr('client-error','⚠️ Please fill Name, Email and Password');return;}
+  if(password.length<6){showErr('client-error','⚠️ Password must be at least 6 characters');return;}
+  try{
+    const r=await fetch(`${API}/auth/register`,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name,email,password,phone,companyName:company,role:'client'})});
+    const d=await r.json();
+    if(d.success){
+      localStorage.setItem('client_token',d.token);
+      localStorage.setItem('client_user',JSON.stringify(d.user));
+      window.location.href='/client';
+    }else{showErr('client-error','❌ '+(d.message||'Registration failed'));}
+  }catch(e){showErr('client-error','🔌 Network error');}
 }
 </script>
 </body>

@@ -10,10 +10,10 @@ const signToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: 
 // POST /api/auth/register
 router.post('/register', async (req, res) => {
   try {
-    const { name, email, password, phone, role } = req.body;
+    const { name, email, password, phone, companyName, role } = req.body;
     const existing = await User.findOne({ email });
     if (existing) return res.status(400).json({ success: false, message: 'Email already registered' });
-    const user = await User.create({ name, email, password, phone, role: role === 'admin' ? 'admin' : 'client' });
+    const user = await User.create({ name, email, password, phone, companyName, role: role === 'admin' ? 'admin' : 'client' });
     const token = signToken(user._id);
     res.status(201).json({ success: true, token, user: { id: user._id, name, email, role: user.role } });
   } catch (err) {

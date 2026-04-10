@@ -4,125 +4,307 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>SHIPORAX – Client Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#064e3b 0%,#065f46 50%,#0f172a 100%)}
-.wrapper{width:100%;max-width:440px;padding:20px}
-.panel{background:#fff;border-radius:20px;padding:40px;box-shadow:0 25px 60px rgba(0,0,0,.35)}
-.panel-header{text-align:center;margin-bottom:30px}
-.panel-icon{width:72px;height:72px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:2rem;margin:0 auto 14px;background:linear-gradient(135deg,#059669,#0891b2)}
-.panel-header h2{font-size:1.6rem;font-weight:700;color:#0f172a}
-.panel-header p{color:#64748b;font-size:.9rem;margin-top:4px}
+body{
+  font-family:'Inter',sans-serif;min-height:100vh;
+  display:flex;align-items:center;justify-content:center;
+  background:#06080F;overflow:hidden;
+}
+.bg{position:fixed;inset:0;
+  background:radial-gradient(ellipse at 20% 50%,#1a1a0060 0%,transparent 55%),
+             radial-gradient(ellipse at 80% 20%,#001a3060 0%,transparent 55%),
+             radial-gradient(ellipse at 50% 95%,#1a060060 0%,transparent 50%),#06080F;
+}
+.orb{position:absolute;border-radius:50%;filter:blur(100px);animation:fl 10s ease-in-out infinite}
+.o1{width:700px;height:700px;background:radial-gradient(#FF6B3522,transparent);top:-200px;left:-200px}
+.o2{width:500px;height:500px;background:radial-gradient(#00C9A718,transparent);bottom:-150px;right:-150px;animation-delay:-5s}
+.o3{width:400px;height:400px;background:radial-gradient(#FF8C4215,transparent);top:40%;left:40%;animation-delay:-3s}
+@keyframes fl{0%,100%{transform:translateY(0)}50%{transform:translateY(-40px)}}
+.grid{position:fixed;inset:0;
+  background-image:linear-gradient(rgba(255,107,53,.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,107,53,.03) 1px,transparent 1px);
+  background-size:65px 65px;
+}
+.particles{position:fixed;inset:0;z-index:2;pointer-events:none}
+.particle{position:absolute;border-radius:50%;animation:rise 11s linear infinite}
+@keyframes rise{0%{transform:translateY(100vh);opacity:0}10%{opacity:.8}90%{opacity:.2}100%{transform:translateY(-5vh);opacity:0}}
+
+.wrap{position:relative;z-index:10;display:flex;gap:0;width:100%;max-width:1000px;min-height:600px;padding:24px;align-items:center;justify-content:center}
+
+/* LEFT SIDE — HERO */
+.hero{
+  flex:1;display:flex;flex-direction:column;justify-content:center;padding:40px;
+}
+.brand{display:flex;align-items:center;gap:12px;margin-bottom:40px}
+.brand-icon{width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,#FF6B35,#FF8C42);display:flex;align-items:center;justify-content:center;font-size:1.5rem;box-shadow:0 10px 28px #FF6B3560}
+.brand-name{font-size:1.5rem;font-weight:900;color:#fff;letter-spacing:-.03em}
+.brand-name em{color:#FF6B35;font-style:normal}
+
+.hero h1{font-size:2.8rem;font-weight:900;color:#fff;line-height:1.15;letter-spacing:-.04em;margin-bottom:16px}
+.hero h1 em{color:#FF6B35;font-style:normal}
+.hero p{font-size:1rem;color:rgba(255,255,255,.45);line-height:1.7;max-width:340px;margin-bottom:32px}
+
+.features{display:flex;flex-direction:column;gap:14px}
+.feat{display:flex;align-items:center;gap:14px}
+.feat-icon{
+  width:42px;height:42px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;
+  background:rgba(255,107,53,.12);border:1px solid rgba(255,107,53,.25);
+}
+.feat-text{font-size:.88rem;color:rgba(255,255,255,.55);font-weight:500}
+.feat-text strong{color:rgba(255,255,255,.85);display:block;font-size:.92rem;margin-bottom:1px}
+
+/* RIGHT SIDE — FORM */
+.card{
+  width:420px;flex-shrink:0;
+  background:rgba(255,255,255,.04);
+  backdrop-filter:blur(32px);-webkit-backdrop-filter:blur(32px);
+  border:1px solid rgba(255,107,53,.2);
+  border-radius:28px;padding:40px;
+  box-shadow:0 32px 80px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.1),0 0 0 1px rgba(255,107,53,.06);
+  position:relative;overflow:hidden;
+}
+.card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,#FF6B35,#FF8C42,#FFCC00);border-radius:28px 28px 0 0;
+}
+
+/* TABS */
+.tabs{display:flex;background:rgba(255,255,255,.06);border-radius:14px;padding:4px;margin-bottom:28px;gap:4px}
+.tab{
+  flex:1;padding:12px;border:none;border-radius:11px;font-size:.9rem;font-weight:600;
+  cursor:pointer;transition:.2s;font-family:'Inter',sans-serif;background:transparent;
+  color:rgba(255,255,255,.4);
+}
+.tab.active{background:linear-gradient(135deg,#FF6B35,#FF8C42);color:#fff;box-shadow:0 4px 14px #FF6B3545}
+.tab:hover:not(.active){color:rgba(255,255,255,.7)}
+
+/* PANELS */
+.form-panel{display:none}
+.form-panel.active{display:block}
+
 .form-group{margin-bottom:16px}
-label{display:block;font-size:.8rem;font-weight:600;color:#374151;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em}
-input{width:100%;padding:12px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:.9rem;outline:none;transition:.2s;background:#f8fafc}
-input:focus{border-color:#059669;background:#fff;box-shadow:0 0 0 3px rgba(5,150,105,.1)}
-.btn{width:100%;padding:13px;border:none;border-radius:10px;font-size:.95rem;font-weight:700;cursor:pointer;transition:.2s;letter-spacing:.02em}
-.btn-primary{background:linear-gradient(135deg,#059669,#0891b2);color:#fff;margin-bottom:10px}
-.btn-primary:hover{opacity:.9;transform:translateY(-1px)}
-.btn-secondary{background:#f1f5f9;color:#374151;font-weight:600}
-.btn-secondary:hover{background:#e2e8f0}
-.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
-.error{background:#fee2e2;color:#991b1b;padding:10px 14px;border-radius:8px;font-size:.82rem;margin-bottom:14px;display:none;border-left:3px solid #dc2626}
-.divider{text-align:center;color:#94a3b8;font-size:.75rem;margin:14px 0;position:relative}
-.divider::before{content:'';position:absolute;top:50%;left:0;right:0;height:1px;background:#e2e8f0}
-.divider span{background:#fff;padding:0 10px;position:relative}
-#register-form{margin-top:14px;border-top:1px solid #e2e8f0;padding-top:14px;display:none}
-.back-link{text-align:center;margin-top:20px;font-size:.82rem;color:#64748b}
-.back-link a{color:#059669;text-decoration:none;font-weight:600}
+label{display:block;font-size:.78rem;font-weight:600;color:rgba(255,255,255,.55);margin-bottom:7px;text-transform:uppercase;letter-spacing:.07em}
+input{
+  width:100%;padding:16px 18px;
+  border:1.5px solid rgba(255,255,255,.1);border-radius:13px;
+  font-size:1rem;outline:none;
+  background:rgba(255,255,255,.06);color:#fff;
+  transition:.25s;font-family:'Inter',sans-serif;
+}
+input::placeholder{color:rgba(255,255,255,.25)}
+input:focus{background:rgba(255,255,255,.1);border-color:#FF6B3570;box-shadow:0 0 0 4px #FF6B3512}
+
+/* BIG BUTTON */
+.btn{
+  width:100%;padding:18px;border:none;border-radius:14px;
+  font-size:1.05rem;font-weight:700;cursor:pointer;
+  transition:.25s;font-family:'Inter',sans-serif;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  position:relative;overflow:hidden;margin-top:6px;
+}
+.btn::before{content:'';position:absolute;inset:0;background:linear-gradient(rgba(255,255,255,.15),transparent);opacity:0;transition:.25s}
+.btn:hover::before{opacity:1}
+.btn:hover{transform:translateY(-2px)}
+.btn:active{transform:translateY(0)}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none!important}
+.btn-main{background:linear-gradient(135deg,#FF6B35,#FF8C42);color:#fff;box-shadow:0 10px 32px #FF6B3555}
+.btn-main:hover{box-shadow:0 16px 42px #FF6B3570}
+
+/* ERROR */
+.error{background:#FF000018;color:#FF9090;padding:12px 16px;border-radius:10px;font-size:.85rem;margin-bottom:14px;display:none;border-left:3px solid #FF4444}
+
+/* ADMIN LINK */
+.admin-link{text-align:center;margin-top:20px;font-size:.8rem;color:rgba(255,255,255,.3)}
+.admin-link a{color:rgba(255,255,255,.5);font-weight:600;text-decoration:none}
+.admin-link a:hover{color:#fff}
+
+@media(max-width:860px){
+  .wrap{flex-direction:column;align-items:center}
+  .hero{padding:20px;text-align:center;align-items:center}
+  .hero h1{font-size:2rem}
+  .hero p{max-width:100%}
+  .card{width:100%;max-width:460px}
+}
+@media(max-width:480px){
+  .card{padding:28px 20px}
+  .btn{padding:20px;font-size:1.1rem}
+  input{padding:17px 16px;font-size:1rem}
+  .hero{display:none}
+}
 </style>
 </head>
 <body>
-<div class="wrapper">
-  <div class="panel">
-    <div class="panel-header">
-      <div class="panel-icon">📦</div>
-      <h2>Client Login</h2>
-      <p>Ship orders & manage shipments</p>
+<div class="bg"><div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div></div>
+<div class="grid"></div>
+<div class="particles" id="pts"></div>
+
+<div class="wrap">
+  <!-- HERO LEFT -->
+  <div class="hero">
+    <div class="brand">
+      <div class="brand-icon">🚀</div>
+      <div class="brand-name">Shipo<em>RAX</em></div>
     </div>
-    <div class="error" id="error-msg"></div>
-    <div class="form-group">
-      <label>Email Address</label>
-      <input type="email" id="email" placeholder="you@company.com" autocomplete="username"/>
+    <h1>Ship <em>Faster.</em><br/>Grow <em>Bigger.</em></h1>
+    <p>India's most trusted shipping platform for small businesses and e-commerce sellers. Pan-India delivery at the best rates.</p>
+    <div class="features">
+      <div class="feat">
+        <div class="feat-icon">📦</div>
+        <div class="feat-text"><strong>Pan-India Delivery</strong>Book shipments to 27,000+ pincodes</div>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">💰</div>
+        <div class="feat-text"><strong>Best Courier Rates</strong>Compare & save up to 40% on shipping</div>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">📊</div>
+        <div class="feat-text"><strong>Real-time Tracking</strong>Live updates for you and your customers</div>
+      </div>
+      <div class="feat">
+        <div class="feat-icon">💵</div>
+        <div class="feat-text"><strong>Fast COD Remittance</strong>Get your cash on delivery amounts quickly</div>
+      </div>
     </div>
-    <div class="form-group">
-      <label>Password</label>
-      <input type="password" id="password" placeholder="Enter your password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"/>
+  </div>
+
+  <!-- FORM RIGHT -->
+  <div class="card">
+    <div class="tabs">
+      <button class="tab active" id="tab-login" onclick="switchTab('login')">Login</button>
+      <button class="tab" id="tab-register" onclick="switchTab('register')">Register Free</button>
     </div>
-    <button class="btn btn-primary" id="login-btn" onclick="doLogin()">🚀 Login to Client Panel</button>
-    <div class="divider"><span>Don't have an account?</span></div>
-    <button class="btn btn-secondary" onclick="toggleRegister()">📝 Register New Account</button>
-    <div id="register-form">
-      <div class="form-group" style="margin-top:14px">
-        <label>Full Name</label>
-        <input type="text" id="reg-name" placeholder="Your full name"/>
+
+    <!-- LOGIN -->
+    <div class="form-panel active" id="panel-login">
+      <div class="error" id="login-error"></div>
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" id="login-email" placeholder="you@yourcompany.com" autocomplete="username"/>
       </div>
       <div class="form-group">
-        <label>Phone</label>
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="Enter your password"
+          autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"/>
+      </div>
+      <button class="btn btn-main" id="login-btn" onclick="doLogin()">
+        🚀 &nbsp;Login to My Account
+      </button>
+    </div>
+
+    <!-- REGISTER -->
+    <div class="form-panel" id="panel-register">
+      <div class="error" id="reg-error"></div>
+      <div class="form-group">
+        <label>Full Name *</label>
+        <input type="text" id="reg-name" placeholder="e.g. Ramesh Kumar"/>
+      </div>
+      <div class="form-group">
+        <label>Company / Shop Name *</label>
+        <input type="text" id="reg-company" placeholder="e.g. Kumar Traders"/>
+      </div>
+      <div class="form-group">
+        <label>Email Address *</label>
+        <input type="email" id="reg-email" placeholder="your@email.com"/>
+      </div>
+      <div class="form-group">
+        <label>Mobile Number</label>
         <input type="tel" id="reg-phone" placeholder="10-digit mobile number" maxlength="10"/>
       </div>
-      <button class="btn btn-primary" onclick="registerClient()">✅ Create Account</button>
+      <div class="form-group">
+        <label>Create Password *</label>
+        <input type="password" id="reg-password" placeholder="Minimum 6 characters"/>
+      </div>
+      <button class="btn btn-main" id="reg-btn" onclick="doRegister()">
+        ✅ &nbsp;Create Account — It's Free!
+      </button>
     </div>
-    <div class="back-link"><a href="/admin/login">→ Admin? Login here</a></div>
+
+    <div class="admin-link">
+      Are you an admin? <a href="/admin/login">Admin login →</a>
+    </div>
   </div>
 </div>
+
 <script>
-const API = '/api';
-window.onload = () => {
-  const t = localStorage.getItem('client_token');
-  if (t) window.location.href = '/client';
+const API='/api';
+window.onload=()=>{
+  if(localStorage.getItem('client_token')) window.location.href='/client';
+  spawn();
+  // If URL has ?register, auto-switch
+  if(location.search.includes('register')) switchTab('register');
 };
-function showError(msg) {
-  const el = document.getElementById('error-msg');
-  el.textContent = msg; el.style.display = 'block';
-  setTimeout(() => el.style.display = 'none', 5000);
+
+function spawn(){
+  const c=document.getElementById('pts');
+  const cols=['#FF6B35','#FF8C42','#FFCC00','#00C9A7','#FF4500'];
+  for(let i=0;i<25;i++){
+    const d=document.createElement('div');
+    d.className='particle';
+    d.style.cssText=`left:${Math.random()*100}vw;width:${2+Math.random()*3}px;height:${2+Math.random()*3}px;background:${cols[Math.floor(Math.random()*cols.length)]};animation-delay:${Math.random()*11}s;animation-duration:${8+Math.random()*9}s`;
+    c.appendChild(d);
+  }
 }
-async function doLogin() {
-  const email = document.getElementById('email').value.trim();
-  const password = document.getElementById('password').value;
-  if (!email || !password) { showError('Please enter email and password'); return; }
-  const btn = document.getElementById('login-btn');
-  btn.disabled = true; btn.textContent = 'Logging in...';
-  try {
-    const res = await fetch(`${API}/auth/login`, {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ email, password })
-    });
-    const d = await res.json();
-    if (d.success && d.user.role === 'client') {
-      localStorage.setItem('client_token', d.token);
-      localStorage.setItem('client_user', JSON.stringify(d.user));
-      window.location.href = '/client';
-    } else if (d.success && d.user.role !== 'client') {
-      showError('This is an admin account. Please use Admin Login.');
-    } else {
-      showError(d.message || 'Invalid email or password');
+
+function switchTab(tab){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.form-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  document.getElementById('panel-'+tab).classList.add('active');
+}
+
+function showErr(id,msg){
+  const e=document.getElementById(id);
+  e.textContent=msg;e.style.display='block';
+  setTimeout(()=>e.style.display='none',5500);
+}
+
+async function doLogin(){
+  const email=document.getElementById('login-email').value.trim();
+  const password=document.getElementById('login-password').value;
+  if(!email||!password){showErr('login-error','⚠️ Please enter your email and password');return;}
+  const btn=document.getElementById('login-btn');
+  btn.disabled=true;btn.textContent='⏳  Please wait...';
+  try{
+    const r=await fetch(`${API}/auth/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})});
+    const d=await r.json();
+    if(d.success&&d.user.role==='client'){
+      localStorage.setItem('client_token',d.token);
+      localStorage.setItem('client_user',JSON.stringify(d.user));
+      window.location.href='/client';
+    }else if(d.success&&d.user.role!=='client'){
+      showErr('login-error','⚠️ This is an admin account. Please use the Admin Login page.');
+    }else{
+      showErr('login-error','❌ '+(d.message||'Wrong email or password. Please try again.'));
     }
-  } catch(e) { showError('Network error. Please try again.'); }
-  btn.disabled = false; btn.textContent = '🚀 Login to Client Panel';
+  }catch(e){showErr('login-error','🔌 Network error. Please check your connection.');}
+  btn.disabled=false;btn.textContent='🚀  Login to My Account';
 }
-function toggleRegister() {
-  const f = document.getElementById('register-form');
-  f.style.display = f.style.display === 'none' ? 'block' : 'none';
-}
-async function registerClient() {
-  const name = document.getElementById('reg-name').value.trim();
-  const email = document.getElementById('email').value.trim();
-  const password = document.getElementById('password').value;
-  const phone = document.getElementById('reg-phone').value.trim();
-  if (!name || !email || !password) { showError('Name, email and password are required'); return; }
-  try {
-    const res = await fetch(`${API}/auth/register`, {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ name, email, password, phone, role: 'client' })
-    });
-    const d = await res.json();
-    if (d.success) {
-      localStorage.setItem('client_token', d.token);
-      localStorage.setItem('client_user', JSON.stringify(d.user));
-      window.location.href = '/client';
-    } else { showError(d.message || 'Registration failed'); }
-  } catch(e) { showError('Network error'); }
+
+async function doRegister(){
+  const name=document.getElementById('reg-name').value.trim();
+  const company=document.getElementById('reg-company').value.trim();
+  const email=document.getElementById('reg-email').value.trim();
+  const phone=document.getElementById('reg-phone').value.trim();
+  const password=document.getElementById('reg-password').value;
+  if(!name||!email||!password){showErr('reg-error','⚠️ Please fill in Name, Email and Password');return;}
+  if(!company){showErr('reg-error','⚠️ Please enter your Company or Shop Name');return;}
+  if(password.length<6){showErr('reg-error','⚠️ Password must be at least 6 characters');return;}
+  const btn=document.getElementById('reg-btn');
+  btn.disabled=true;btn.textContent='⏳  Creating account...';
+  try{
+    const r=await fetch(`${API}/auth/register`,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name,email,password,phone,companyName:company,role:'client'})});
+    const d=await r.json();
+    if(d.success){
+      localStorage.setItem('client_token',d.token);
+      localStorage.setItem('client_user',JSON.stringify(d.user));
+      window.location.href='/client';
+    }else{showErr('reg-error','❌ '+(d.message||'Registration failed. Please try again.'));}
+  }catch(e){showErr('reg-error','🔌 Network error. Please try again.');}
+  btn.disabled=false;btn.textContent='✅  Create Account — It\'s Free!';
 }
 </script>
 </body>
