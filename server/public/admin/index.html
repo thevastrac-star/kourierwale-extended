@@ -321,19 +321,174 @@ textarea{resize:vertical;min-height:80px}
 
     <!-- ═══ RATES ═══ -->
     <div class="page" id="page-rates">
-      <div class="card">
-        <div class="card-header">
-          <span class="card-title">Rate Management</span>
-          <button class="btn btn-primary btn-sm" onclick="openModal('rate-modal')">+ Add Rate</button>
+      <!-- Step 1: Client + Courier Selection Bar -->
+      <div class="card" style="margin-bottom:16px;border-left:4px solid var(--primary)">
+        <div class="card-header" style="margin-bottom:12px">
+          <span class="card-title">💲 Rate Management</span>
+          <button class="btn btn-primary btn-sm" onclick="openRateForm()">+ Add Rate Slab</button>
         </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:14px;align-items:flex-end;flex-wrap:wrap">
+          <div class="form-group" style="margin-bottom:0">
+            <label style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em">
+              👤 Select Client
+            </label>
+            <select id="rates-client-sel" onchange="onClientRateChange()" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:.875rem;outline:none">
+              <option value="">🌐 Global Default Rates (all clients)</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em">
+              🚚 Filter by Courier
+            </label>
+            <select id="rates-courier-sel" onchange="loadRates()" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:.875rem;outline:none">
+              <option value="">All Couriers</option>
+            </select>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="clearRateFilters()" style="margin-bottom:0;height:40px">Clear</button>
+        </div>
+        <div id="rates-client-info" style="margin-top:12px;padding:10px 14px;background:#eff6ff;border-radius:8px;font-size:.875rem;border-left:3px solid var(--primary);display:none"></div>
+      </div>
+
+      <!-- Rate Slabs Table -->
+      <div class="card" style="margin-bottom:16px">
         <div class="table-wrap"><table>
-          <thead><tr><th>Courier</th><th>Zone</th><th>Weight Range</th><th>Base Rate</th><th>Per Kg</th><th>COD Charge</th><th>Status</th><th>Actions</th></tr></thead>
+          <thead><tr>
+            <th>Slab / Courier</th><th>Scope</th><th>Weight</th>
+            <th>Zone A<br/><small style="font-weight:400">Within City</small></th>
+            <th>Zone B<br/><small style="font-weight:400">Metro-Metro</small></th>
+            <th>Zone C<br/><small style="font-weight:400">Metro-NonMetro</small></th>
+            <th>Zone D<br/><small style="font-weight:400">National</small></th>
+            <th>Zone E<br/><small style="font-weight:400">Remote</small></th>
+            <th>Add./500g</th><th>COD Rule</th><th>Fuel</th><th>Status</th><th>Actions</th>
+          </tr></thead>
           <tbody id="rates-tbody"></tbody>
         </table></div>
       </div>
+
+      <!-- Add/Edit Rate Form -->
+      <div class="card" id="rate-form-card" style="display:none;border:2px solid var(--primary)">
+        <div class="card-header">
+          <span class="card-title" id="rate-form-title">➕ Add Rate Slab</span>
+          <button class="btn btn-outline btn-sm" onclick="document.getElementById('rate-form-card').style.display='none'">✕ Cancel</button>
+        </div>
+        <input type="hidden" id="rf-id"/>
+
+        <!-- Row 1: Courier, Slab, Assign to -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:16px">
+          <div class="form-group" style="margin-bottom:0">
+            <label>🚚 Courier *</label>
+            <select id="rf-courier" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:.875rem;outline:none">
+              <option value="">Select courier...</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label>📋 Slab Name</label>
+            <input id="rf-slab" placeholder="e.g. Standard, Express, Premium" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:.875rem;outline:none"/>
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label>👤 Assign To (Client)</label>
+            <select id="rf-user" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:.875rem;outline:none">
+              <option value="">🌐 Global Default (all clients)</option>
+            </select>
+            <div style="font-size:.72rem;color:var(--text-muted);margin-top:3px">Leave blank = applies to all clients without custom rate</div>
+          </div>
+        </div>
+
+        <!-- Row 2: Weight slab -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:16px">
+          <div class="form-group" style="margin-bottom:0">
+            <label>Min Weight (kg)</label>
+            <input type="number" id="rf-min-w" placeholder="0" step="0.1" min="0" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:.875rem;outline:none"/>
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label>Max Weight (kg)</label>
+            <input type="number" id="rf-max-w" placeholder="0.5" step="0.1" min="0.1" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:.875rem;outline:none"/>
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label>Additional per 500g (₹)</label>
+            <input type="number" id="rf-add-w" placeholder="0" step="0.5" min="0" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:.875rem;outline:none"/>
+          </div>
+        </div>
+
+        <!-- Zone Rates -->
+        <div style="background:#f0f9ff;border-radius:10px;padding:16px;margin-bottom:16px;border:1px solid #bae6fd">
+          <div style="font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:14px;color:#0369a1">📍 Zone Rates (₹ per shipment)</div>
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px">
+            <div class="form-group" style="margin-bottom:0">
+              <label style="font-size:.75rem">Zone A<br/><span style="font-weight:400;color:var(--text-muted);font-size:.7rem">Within City</span></label>
+              <input type="number" id="rf-za" placeholder="27" min="0" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:8px;font-size:.9rem;outline:none;text-align:center"/>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label style="font-size:.75rem">Zone B<br/><span style="font-weight:400;color:var(--text-muted);font-size:.7rem">Metro-Metro</span></label>
+              <input type="number" id="rf-zb" placeholder="38" min="0" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:8px;font-size:.9rem;outline:none;text-align:center"/>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label style="font-size:.75rem">Zone C<br/><span style="font-weight:400;color:var(--text-muted);font-size:.7rem">Metro-NonMetro</span></label>
+              <input type="number" id="rf-zc" placeholder="44" min="0" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:8px;font-size:.9rem;outline:none;text-align:center"/>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label style="font-size:.75rem">Zone D<br/><span style="font-weight:400;color:var(--text-muted);font-size:.7rem">National</span></label>
+              <input type="number" id="rf-zd" placeholder="52" min="0" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:8px;font-size:.9rem;outline:none;text-align:center"/>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label style="font-size:.75rem">Zone E<br/><span style="font-weight:400;color:var(--text-muted);font-size:.7rem">Remote Area</span></label>
+              <input type="number" id="rf-ze" placeholder="62" min="0" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:8px;font-size:.9rem;outline:none;text-align:center"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- COD Charges -->
+        <div style="background:#fff7ed;border-radius:10px;padding:16px;margin-bottom:16px;border:1px solid #fed7aa">
+          <div style="font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:14px;color:#92400e">💵 COD Charges</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:12px">
+            <div class="form-group" style="margin-bottom:0">
+              <label>Charge Mode</label>
+              <select id="rf-cod-mode" onchange="updateCODFields()" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:.875rem;outline:none">
+                <option value="threshold">Threshold — Flat ₹ below amount, % above</option>
+                <option value="flat_always">Always Flat ₹ (same charge every COD order)</option>
+                <option value="percent_always">Always % of order value</option>
+              </select>
+            </div>
+            <div id="cod-flat-group" class="form-group" style="margin-bottom:0">
+              <label>Flat Charge (₹)</label>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-size:1.1rem;font-weight:700;color:#92400e">₹</span>
+                <input type="number" id="rf-cod-flat" placeholder="30" min="0" step="0.5" style="flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:.875rem;outline:none"/>
+              </div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+            <div id="cod-pct-group" class="form-group" style="margin-bottom:0">
+              <label>Percentage (%)</label>
+              <div style="display:flex;align-items:center;gap:8px">
+                <input type="number" id="rf-cod-pct" placeholder="1.5" min="0" step="0.1" style="flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:.875rem;outline:none"/>
+                <span style="font-size:1.1rem;font-weight:700;color:#92400e">%</span>
+              </div>
+              <div style="font-size:.72rem;color:#92400e;margin-top:3px">Applied on full COD order value</div>
+            </div>
+            <div id="cod-threshold-group" class="form-group" style="margin-bottom:0">
+              <label>Threshold Amount (₹)</label>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-size:1.1rem;font-weight:700;color:#92400e">₹</span>
+                <input type="number" id="rf-cod-thresh" placeholder="1500" min="0" style="flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:.875rem;outline:none"/>
+              </div>
+              <div style="font-size:.72rem;color:#92400e;margin-top:3px">Below this → flat ₹ charge | Above → % of order</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fuel Surcharge + Save -->
+        <div style="display:flex;gap:16px;align-items:flex-end">
+          <div class="form-group" style="margin-bottom:0">
+            <label>⛽ Fuel Surcharge (₹)</label>
+            <input type="number" id="rf-fuel" placeholder="0" min="0" step="0.5" style="width:180px;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:.875rem;outline:none"/>
+          </div>
+          <button class="btn btn-primary" onclick="saveRate()" style="min-width:180px;padding:10px 20px">💾 Save Rate Slab</button>
+        </div>
+      </div>
     </div>
 
-    <!-- ═══ TICKETS ═══ -->
+<!-- ═══ TICKETS ═══ -->
     <div class="page" id="page-tickets">
       <div class="card">
         <div class="card-header"><span class="card-title">Support Tickets</span></div>
@@ -556,7 +711,8 @@ textarea{resize:vertical;min-height:80px}
     <div class="modal-header"><span class="modal-title">KYC Review</span><button class="modal-close" onclick="closeModal('kyc-modal')">×</button></div>
     <input type="hidden" id="kycm-id"/>
     <div id="kycm-info" style="margin-bottom:16px"></div>
-    <div class="form-group"><label>Rejection Reason (if rejecting)</label><input id="kycm-reason" placeholder="Optional for approval"/></div>
+    <div id="kycm-docs" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px"></div>
+    <div class="form-group"><label>Rejection Reason (if rejecting)</label><input id="kycm-reason" placeholder="Required when rejecting"/></div>
     <div style="display:flex;gap:10px">
       <button class="btn btn-success" onclick="reviewKYC('approved')">✓ Approve</button>
       <button class="btn btn-danger" onclick="reviewKYC('rejected')">✗ Reject</button>
@@ -586,7 +742,7 @@ let walletTargetUserId = null;
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 window.onload = () => {
-  if (!token) { window.location.href = '/login'; return; }
+  if (!token) { window.location.href = '/admin/login'; return; }
   document.getElementById('admin-name').textContent = currentUser.name || 'Admin';
   document.getElementById('avatar-initials').textContent = (currentUser.name || 'A')[0].toUpperCase();
   loadDashboard();
@@ -599,7 +755,7 @@ function navigate(page) {
   document.getElementById('page-' + page).classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n => { if (n.getAttribute('onclick')?.includes(page)) n.classList.add('active'); });
   document.getElementById('page-title').textContent = page.charAt(0).toUpperCase() + page.slice(1).replace(/_/g,' ');
-  const loaders = { dashboard: loadDashboard, users: loadUsers, kyc: loadKYC, wallet: () => {}, recharges: loadRecharges, cod: loadCOD, orders: loadOrders, ndr: loadNDR, couriers: loadCouriers, rates: loadRates, tickets: loadTickets, settings: loadSettings, logs: loadLogs };
+  const loaders = { dashboard: loadDashboard, users: loadUsers, kyc: loadKYC, wallet: () => {}, recharges: loadRecharges, cod: loadCOD, orders: loadOrders, ndr: loadNDR, couriers: loadCouriers, rates: initRates, tickets: loadTickets, settings: loadSettings, logs: loadLogs };
   if (loaders[page]) loaders[page]();
 }
 
@@ -701,14 +857,36 @@ async function loadKYC() {
       <td>${u.kyc?.panNumber||'—'}</td><td>${u.kyc?.aadhaarNumber||'—'}</td>
       <td><span class="status s-${u.kyc?.status}">${u.kyc?.status}</span></td>
       <td>${fmtDate(u.kyc?.submittedAt)}</td>
-      <td><button class="btn btn-primary btn-sm" onclick="openKYCModal('${u._id}','${u.name}','${u.kyc?.panNumber||''}','${u.kyc?.aadhaarNumber||''}')">Review</button></td>
+      <td><button class="btn btn-primary btn-sm" onclick="openKYCModal('${u._id}')">Review</button></td>
     </tr>`).join('') || '<tr><td colspan="7" class="empty">No KYC submissions</td></tr>';
-}
-function openKYCModal(uid, name, pan, aadhaar) {
+async function openKYCModal(uid) {
   document.getElementById('kycm-id').value = uid;
-  document.getElementById('kycm-info').innerHTML = `<b>${name}</b><br/>PAN: ${pan}<br/>Aadhaar: ${aadhaar}`;
   document.getElementById('kycm-reason').value = '';
+  const d = await api('GET', `/kyc/admin/${uid}`);
+  if (d?.success) {
+    const k = d.user.kyc;
+    document.getElementById('kycm-info').innerHTML = `<div style="background:#f8fafc;padding:12px;border-radius:8px;font-size:.875rem"><b>${d.user.name}</b> (${d.user.email})<br/>PAN: <b>${k.panNumber||'—'}</b> | Aadhaar: <b>${k.aadhaarNumber||'—'}</b><br/>Submitted: ${k.submittedAt ? new Date(k.submittedAt).toLocaleDateString('en-IN') : '—'}</div>`;
+    const docs = document.getElementById('kycm-docs');
+    docs.innerHTML = [
+      { label: 'PAN Card', path: k.panDocument },
+      { label: 'Aadhaar', path: k.aadhaarDocument }
+    ].map(doc => {
+      if (!doc.path) return `<div style="border:1px solid var(--border);border-radius:8px;padding:12px;color:#94a3b8;font-size:.82rem">${doc.label}: Not uploaded</div>`;
+      const cleanPath = doc.path.replace(/\\/g, '/');
+      const url = '/' + cleanPath.replace(/^\//, '');
+      const isImg = /\.(jpg|jpeg|png|gif|webp)$/i.test(cleanPath);
+      return `<div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">
+        <div style="font-size:.75rem;font-weight:700;padding:6px 10px;background:#f8fafc;border-bottom:1px solid var(--border)">${doc.label}</div>
+        ${isImg
+          ? `<img src="${url}" style="width:100%;max-height:220px;object-fit:contain;padding:8px" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"/>
+             <div style="display:none;padding:8px"><a href="${url}" target="_blank" class="btn btn-outline btn-sm">📄 Open ${doc.label}</a></div>`
+          : `<div style="padding:10px"><a href="${url}" target="_blank" class="btn btn-outline btn-sm">📄 View ${doc.label}</a></div>`
+        }
+      </div>`;
+    }).join('');
+  }
   openModal('kyc-modal');
+}
 }
 async function reviewKYC(status) {
   const uid = document.getElementById('kycm-id').value;
@@ -949,55 +1127,258 @@ async function saveCourier() {
 }
 
 // ─── RATES ───────────────────────────────────────────────────────────────────
-async function loadRates() {
-  const d = await api('GET', '/couriers/rates/all');
-  if (!d?.success) return;
-  const tbody = document.getElementById('rates-tbody');
-  tbody.innerHTML = d.rates.map(r => `
-    <tr>
-      <td>${r.courier?.name||'—'}</td>
-      <td>${r.zone||'—'}</td>
-      <td>${r.minWeight}kg – ${r.maxWeight||'∞'}kg</td>
-      <td>₹${r.baseRate}</td>
-      <td>₹${r.ratePerKg}/kg</td>
-      <td>₹${r.codCharge}</td>
-      <td><span class="status s-${r.isActive?'approved':'rejected'}">${r.isActive?'Active':'Off'}</span></td>
-      <td><button class="btn btn-outline btn-sm" onclick="editRate('${r._id}')">Edit</button></td>
-    </tr>`).join('') || '<tr><td colspan="8" class="empty">No rates</td></tr>';
-}
-async function editRate(id) {
-  const d = await api('GET', '/couriers/rates/all');
-  const rate = d?.rates?.find(r => r._id === id);
-  if (!rate) return;
-  document.getElementById('rm-id').value = rate._id;
-  document.getElementById('rm-courier').value = rate.courier?._id || '';
-  document.getElementById('rm-zone').value = rate.zone || '';
-  document.getElementById('rm-minw').value = rate.minWeight;
-  document.getElementById('rm-maxw').value = rate.maxWeight || '';
-  document.getElementById('rm-base').value = rate.baseRate;
-  document.getElementById('rm-perkg').value = rate.ratePerKg;
-  document.getElementById('rm-cod').value = rate.codCharge;
-  document.getElementById('rm-fuel').value = rate.fuelSurcharge;
-  openModal('rate-modal');
-}
-async function saveRate() {
-  const id = document.getElementById('rm-id').value;
-  const payload = {
-    courier: document.getElementById('rm-courier').value,
-    zone: document.getElementById('rm-zone').value,
-    minWeight: +document.getElementById('rm-minw').value,
-    maxWeight: document.getElementById('rm-maxw').value ? +document.getElementById('rm-maxw').value : undefined,
-    baseRate: +document.getElementById('rm-base').value,
-    ratePerKg: +document.getElementById('rm-perkg').value,
-    codCharge: +document.getElementById('rm-cod').value,
-    fuelSurcharge: +document.getElementById('rm-fuel').value
-  };
-  const d = id ? await api('PATCH', `/couriers/rates/${id}`, payload) : await api('POST', '/couriers/rates/create', payload);
-  if (d?.success) { toast('Rate saved','success'); closeModal('rate-modal'); loadRates(); document.getElementById('rm-id').value = ''; }
-  else toast(d?.message||'Error','error');
+let ratesCouriersCache = [];
+let ratesClientsCache = [];
+
+async function initRates() {
+  // Load couriers dropdown
+  const cd = await api('GET', '/couriers');
+  if (cd?.success) {
+    ratesCouriersCache = cd.couriers;
+    const cSel = document.getElementById('rates-courier-sel');
+    const rfCourier = document.getElementById('rf-courier');
+    const opts = cd.couriers.map(c => `<option value="${c._id}">${c.name} (${c.code})</option>`).join('');
+    if (cSel) cSel.innerHTML = '<option value="">All Couriers</option>' + opts;
+    if (rfCourier) rfCourier.innerHTML = '<option value="">Select courier...</option>' + opts;
+  }
+  // Load clients dropdown
+  const ld = await api('GET', '/couriers/rates/clients-list');
+  if (ld?.success) {
+    ratesClientsCache = ld.clients;
+    const clientSel = document.getElementById('rates-client-sel');
+    const rfUser = document.getElementById('rf-user');
+    const opts = ld.clients.map(c => `<option value="${c._id}">${c.name} — ${c.email}</option>`).join('');
+    if (clientSel) clientSel.innerHTML = '<option value="">🌐 Global Default Rates (all clients)</option>' + opts;
+    if (rfUser) rfUser.innerHTML = '<option value="">🌐 Global Default (all clients)</option>' + opts;
+  }
+  loadRates();
 }
 
-// ─── TICKETS ─────────────────────────────────────────────────────────────────
+function onClientRateChange() {
+  const userId = document.getElementById('rates-client-sel')?.value || '';
+  const info = document.getElementById('rates-client-info');
+  if (userId && info) {
+    const client = ratesClientsCache.find(c => c._id === userId);
+    if (client) {
+      info.style.display = 'block';
+      info.innerHTML = `<b>📋 Viewing rates for: ${client.name}</b> (${client.email})<br/>
+        <span style="font-size:.8rem;color:var(--text-muted)">Custom rates override global defaults for this client. 
+        Set "Assign To" = this client when adding a rate slab.</span>`;
+      // Also pre-select this client in the add form
+      const rfUser = document.getElementById('rf-user');
+      if (rfUser) rfUser.value = userId;
+    }
+  } else if (info) {
+    info.style.display = 'none';
+    const rfUser = document.getElementById('rf-user');
+    if (rfUser) rfUser.value = '';
+  }
+  loadRates();
+}
+
+function clearRateFilters() {
+  const cs = document.getElementById('rates-client-sel');
+  const cc = document.getElementById('rates-courier-sel');
+  const info = document.getElementById('rates-client-info');
+  if (cs) cs.value = '';
+  if (cc) cc.value = '';
+  if (info) info.style.display = 'none';
+  loadRates();
+}
+
+async function loadRates() {
+  const userId = document.getElementById('rates-client-sel')?.value || '';
+  const courierId = document.getElementById('rates-courier-sel')?.value || '';
+  let rates = [];
+  if (userId) {
+    const d = await api('GET', `/couriers/rates/client/${userId}`);
+    if (d?.success) {
+      // Show client-specific rates; if none, show global
+      rates = d.clientRates.length > 0 ? d.clientRates : d.globalRates;
+      const info = document.getElementById('rates-client-info');
+      if (info && info.style.display !== 'none') {
+        const client = ratesClientsCache.find(c => c._id === userId);
+        info.innerHTML = `<b>📋 Rates for: ${client?.name||'Client'}</b> — 
+          <span style="color:var(--primary)">${d.clientRates.length} custom rate(s)</span> | 
+          <span style="color:var(--text-muted)">${d.globalRates.length} global rate(s)</span><br/>
+          <span style="font-size:.8rem;color:var(--text-muted)">Showing ${d.clientRates.length > 0 ? 'client-specific' : 'global (no custom rates set)'} rates.</span>`;
+      }
+    }
+  } else {
+    const d = await api('GET', '/couriers/rates/all');
+    if (d?.success) rates = d.rates;
+  }
+  if (courierId) rates = rates.filter(r => (r.courier?._id || r.courier) === courierId);
+  const tbody = document.getElementById('rates-tbody');
+  if (!tbody) return;
+  if (!rates.length) {
+    tbody.innerHTML = `<tr><td colspan="13" style="text-align:center;padding:32px;color:var(--text-muted)">
+      No rates found. Click <b>"+ Add Rate Slab"</b> above to create one.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = rates.map(r => {
+    const cod = r.cod || {};
+    let codRule = '';
+    if (cod.mode === 'flat_always') codRule = `₹${cod.flat} flat (always)`;
+    else if (cod.mode === 'percent_always') codRule = `${cod.percent}% of order`;
+    else codRule = `₹${cod.flat} if ≤₹${cod.thresholdAmount}, ${cod.percent}% above`;
+    const z = r.zones || {};
+    const isClientRate = !!r.user;
+    return `<tr>
+      <td>
+        <b>${r.slabName||'Standard'}</b><br/>
+        <small style="color:var(--text-muted)">${r.courier?.name||'—'} (${r.courier?.code||'—'})</small>
+      </td>
+      <td>${isClientRate
+        ? `<span class="status s-processing" style="font-size:.68rem">Per-client</span>`
+        : `<span class="status s-draft" style="font-size:.68rem">Global</span>`
+      }</td>
+      <td style="white-space:nowrap">${r.minWeight||0}–${r.maxWeight||0} kg</td>
+      <td style="font-weight:700;color:var(--primary)">₹${z.a||0}</td>
+      <td style="font-weight:700;color:var(--primary)">₹${z.b||0}</td>
+      <td style="font-weight:700;color:var(--primary)">₹${z.c||0}</td>
+      <td style="font-weight:700;color:var(--primary)">₹${z.d||0}</td>
+      <td style="font-weight:700;color:var(--primary)">₹${z.e||0}</td>
+      <td>₹${r.additionalWeightRate||0}</td>
+      <td style="font-size:.78rem;white-space:nowrap;max-width:160px">${codRule}</td>
+      <td>₹${r.fuelSurcharge||0}</td>
+      <td><span class="status ${r.isActive?'s-approved':'s-rejected'}">${r.isActive?'Active':'Off'}</span></td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-outline btn-sm" onclick="editRate('${r._id}')">✏ Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteRate('${r._id}')">🗑</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function updateCODFields() {
+  const mode = document.getElementById('rf-cod-mode')?.value;
+  if (!mode) return;
+  const flatGrp = document.getElementById('cod-flat-group');
+  const pctGrp = document.getElementById('cod-pct-group');
+  const threshGrp = document.getElementById('cod-threshold-group');
+  if (mode === 'flat_always') {
+    if (flatGrp) flatGrp.style.display = 'block';
+    if (pctGrp) pctGrp.style.display = 'none';
+    if (threshGrp) threshGrp.style.display = 'none';
+  } else if (mode === 'percent_always') {
+    if (flatGrp) flatGrp.style.display = 'none';
+    if (pctGrp) pctGrp.style.display = 'block';
+    if (threshGrp) threshGrp.style.display = 'none';
+  } else {
+    // threshold
+    if (flatGrp) flatGrp.style.display = 'block';
+    if (pctGrp) pctGrp.style.display = 'block';
+    if (threshGrp) threshGrp.style.display = 'block';
+  }
+}
+
+function openRateForm(rateObj) {
+  const card = document.getElementById('rate-form-card');
+  if (!card) return;
+  card.style.display = 'block';
+  card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (!rateObj) {
+    document.getElementById('rf-id').value = '';
+    document.getElementById('rate-form-title').textContent = '➕ Add Rate Slab';
+    ['rf-slab','rf-min-w','rf-max-w','rf-za','rf-zb','rf-zc','rf-zd','rf-ze','rf-add-w','rf-fuel'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.value = '';
+    });
+    document.getElementById('rf-cod-flat').value = '30';
+    document.getElementById('rf-cod-pct').value = '1.5';
+    document.getElementById('rf-cod-thresh').value = '1500';
+    document.getElementById('rf-cod-mode').value = 'threshold';
+    // Pre-select currently selected client
+    const selClient = document.getElementById('rates-client-sel')?.value;
+    const rfUser = document.getElementById('rf-user');
+    if (rfUser && selClient) rfUser.value = selClient;
+    updateCODFields();
+  }
+}
+
+async function editRate(id) {
+  let r = null;
+  const userId = document.getElementById('rates-client-sel')?.value;
+  if (userId) {
+    const d2 = await api('GET', `/couriers/rates/client/${userId}`);
+    r = [...(d2?.clientRates||[]), ...(d2?.globalRates||[])].find(x => x._id === id);
+  }
+  if (!r) {
+    const d = await api('GET', '/couriers/rates/all');
+    r = d?.rates?.find(x => x._id === id);
+  }
+  if (!r) { toast('Rate not found', 'error'); return; }
+  openRateForm(r);
+  document.getElementById('rf-id').value = r._id;
+  document.getElementById('rate-form-title').textContent = '✏ Edit Rate Slab';
+  document.getElementById('rf-courier').value = r.courier?._id || r.courier || '';
+  document.getElementById('rf-slab').value = r.slabName || '';
+  document.getElementById('rf-user').value = r.user || '';
+  document.getElementById('rf-min-w').value = r.minWeight || 0;
+  document.getElementById('rf-max-w').value = r.maxWeight || 0;
+  const z = r.zones || {};
+  document.getElementById('rf-za').value = z.a || 0;
+  document.getElementById('rf-zb').value = z.b || 0;
+  document.getElementById('rf-zc').value = z.c || 0;
+  document.getElementById('rf-zd').value = z.d || 0;
+  document.getElementById('rf-ze').value = z.e || 0;
+  document.getElementById('rf-add-w').value = r.additionalWeightRate || 0;
+  const cod = r.cod || {};
+  document.getElementById('rf-cod-mode').value = cod.mode || 'threshold';
+  document.getElementById('rf-cod-flat').value = cod.flat || 30;
+  document.getElementById('rf-cod-pct').value = cod.percent || 1.5;
+  document.getElementById('rf-cod-thresh').value = cod.thresholdAmount || 1500;
+  document.getElementById('rf-fuel').value = r.fuelSurcharge || 0;
+  updateCODFields();
+}
+
+async function saveRate() {
+  const id = document.getElementById('rf-id').value;
+  const courierId = document.getElementById('rf-courier').value;
+  if (!courierId) { toast('Please select a courier', 'error'); return; }
+  const za = parseFloat(document.getElementById('rf-za').value)||0;
+  const zb = parseFloat(document.getElementById('rf-zb').value)||0;
+  const zc = parseFloat(document.getElementById('rf-zc').value)||0;
+  const zd = parseFloat(document.getElementById('rf-zd').value)||0;
+  const ze = parseFloat(document.getElementById('rf-ze').value)||0;
+  if (!za && !zb && !zc && !zd && !ze) { toast('Please enter at least one zone rate', 'error'); return; }
+  const payload = {
+    courierId,
+    userId: document.getElementById('rf-user').value || null,
+    slabName: document.getElementById('rf-slab').value || 'Standard',
+    minWeight: parseFloat(document.getElementById('rf-min-w').value) || 0,
+    maxWeight: parseFloat(document.getElementById('rf-max-w').value) || 0.5,
+    zones: { a: za, b: zb, c: zc, d: zd, e: ze },
+    additionalWeightRate: parseFloat(document.getElementById('rf-add-w').value) || 0,
+    cod: {
+      mode: document.getElementById('rf-cod-mode').value,
+      flat: parseFloat(document.getElementById('rf-cod-flat').value) || 30,
+      percent: parseFloat(document.getElementById('rf-cod-pct').value) || 1.5,
+      thresholdAmount: parseFloat(document.getElementById('rf-cod-thresh').value) || 1500
+    },
+    fuelSurcharge: parseFloat(document.getElementById('rf-fuel').value) || 0
+  };
+  const d = id ? await api('PATCH', `/couriers/rates/${id}`, payload) : await api('POST', '/couriers/rates', payload);
+  if (d?.success) {
+    toast('Rate slab saved!', 'success');
+    document.getElementById('rate-form-card').style.display = 'none';
+    // Sync courier list in case it changed
+    const rfCourier = document.getElementById('rf-courier');
+    if (rfCourier) rfCourier.innerHTML = '<option value="">Select courier...</option>' + ratesCouriersCache.map(c=>`<option value="${c._id}">${c.name} (${c.code})</option>`).join('');
+    loadRates();
+  } else {
+    toast(d?.message || 'Error saving rate', 'error');
+  }
+}
+
+async function deleteRate(id) {
+  if (!confirm('Delete this rate slab? This cannot be undone.')) return;
+  const d = await api('DELETE', `/couriers/rates/${id}`);
+  if (d?.success) { toast('Rate deleted', 'success'); loadRates(); }
+  else toast(d?.message || 'Error', 'error');
+}
+
+
 async function loadTickets() {
   const status = document.getElementById('ticket-filter').value;
   const d = await api('GET', '/tickets' + (status ? `?status=${status}` : ''));
@@ -1131,7 +1512,7 @@ function renderPagination(containerId, current, total, onClick) {
 function logout() {
   localStorage.removeItem('admin_token');
   localStorage.removeItem('admin_user');
-  window.location.href = '/login';
+  window.location.href = '/admin/login';
 }
 // Close modals on overlay click
 document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); }));

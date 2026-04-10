@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Kourierwale – Client Login</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#064e3b 0%,#065f46 50%,#0f172a 100%)}
+.wrapper{width:100%;max-width:440px;padding:20px}
+.panel{background:#fff;border-radius:20px;padding:40px;box-shadow:0 25px 60px rgba(0,0,0,.35)}
+.panel-header{text-align:center;margin-bottom:30px}
+.panel-icon{width:72px;height:72px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:2rem;margin:0 auto 14px;background:linear-gradient(135deg,#059669,#0891b2)}
+.panel-header h2{font-size:1.6rem;font-weight:700;color:#0f172a}
+.panel-header p{color:#64748b;font-size:.9rem;margin-top:4px}
+.form-group{margin-bottom:16px}
+label{display:block;font-size:.8rem;font-weight:600;color:#374151;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em}
+input{width:100%;padding:12px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:.9rem;outline:none;transition:.2s;background:#f8fafc}
+input:focus{border-color:#059669;background:#fff;box-shadow:0 0 0 3px rgba(5,150,105,.1)}
+.btn{width:100%;padding:13px;border:none;border-radius:10px;font-size:.95rem;font-weight:700;cursor:pointer;transition:.2s;letter-spacing:.02em}
+.btn-primary{background:linear-gradient(135deg,#059669,#0891b2);color:#fff;margin-bottom:10px}
+.btn-primary:hover{opacity:.9;transform:translateY(-1px)}
+.btn-secondary{background:#f1f5f9;color:#374151;font-weight:600}
+.btn-secondary:hover{background:#e2e8f0}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.error{background:#fee2e2;color:#991b1b;padding:10px 14px;border-radius:8px;font-size:.82rem;margin-bottom:14px;display:none;border-left:3px solid #dc2626}
+.divider{text-align:center;color:#94a3b8;font-size:.75rem;margin:14px 0;position:relative}
+.divider::before{content:'';position:absolute;top:50%;left:0;right:0;height:1px;background:#e2e8f0}
+.divider span{background:#fff;padding:0 10px;position:relative}
+#register-form{margin-top:14px;border-top:1px solid #e2e8f0;padding-top:14px;display:none}
+.back-link{text-align:center;margin-top:20px;font-size:.82rem;color:#64748b}
+.back-link a{color:#059669;text-decoration:none;font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-icon">📦</div>
+      <h2>Client Login</h2>
+      <p>Ship orders & manage shipments</p>
+    </div>
+    <div class="error" id="error-msg"></div>
+    <div class="form-group">
+      <label>Email Address</label>
+      <input type="email" id="email" placeholder="you@company.com" autocomplete="username"/>
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="password" placeholder="Enter your password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"/>
+    </div>
+    <button class="btn btn-primary" id="login-btn" onclick="doLogin()">🚀 Login to Client Panel</button>
+    <div class="divider"><span>Don't have an account?</span></div>
+    <button class="btn btn-secondary" onclick="toggleRegister()">📝 Register New Account</button>
+    <div id="register-form">
+      <div class="form-group" style="margin-top:14px">
+        <label>Full Name</label>
+        <input type="text" id="reg-name" placeholder="Your full name"/>
+      </div>
+      <div class="form-group">
+        <label>Phone</label>
+        <input type="tel" id="reg-phone" placeholder="10-digit mobile number" maxlength="10"/>
+      </div>
+      <button class="btn btn-primary" onclick="registerClient()">✅ Create Account</button>
+    </div>
+    <div class="back-link"><a href="/admin/login">→ Admin? Login here</a></div>
+  </div>
+</div>
+<script>
+const API = '/api';
+window.onload = () => {
+  const t = localStorage.getItem('client_token');
+  if (t) window.location.href = '/client';
+};
+function showError(msg) {
+  const el = document.getElementById('error-msg');
+  el.textContent = msg; el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 5000);
+}
+async function doLogin() {
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  if (!email || !password) { showError('Please enter email and password'); return; }
+  const btn = document.getElementById('login-btn');
+  btn.disabled = true; btn.textContent = 'Logging in...';
+  try {
+    const res = await fetch(`${API}/auth/login`, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ email, password })
+    });
+    const d = await res.json();
+    if (d.success && d.user.role === 'client') {
+      localStorage.setItem('client_token', d.token);
+      localStorage.setItem('client_user', JSON.stringify(d.user));
+      window.location.href = '/client';
+    } else if (d.success && d.user.role !== 'client') {
+      showError('This is an admin account. Please use Admin Login.');
+    } else {
+      showError(d.message || 'Invalid email or password');
+    }
+  } catch(e) { showError('Network error. Please try again.'); }
+  btn.disabled = false; btn.textContent = '🚀 Login to Client Panel';
+}
+function toggleRegister() {
+  const f = document.getElementById('register-form');
+  f.style.display = f.style.display === 'none' ? 'block' : 'none';
+}
+async function registerClient() {
+  const name = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const phone = document.getElementById('reg-phone').value.trim();
+  if (!name || !email || !password) { showError('Name, email and password are required'); return; }
+  try {
+    const res = await fetch(`${API}/auth/register`, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ name, email, password, phone, role: 'client' })
+    });
+    const d = await res.json();
+    if (d.success) {
+      localStorage.setItem('client_token', d.token);
+      localStorage.setItem('client_user', JSON.stringify(d.user));
+      window.location.href = '/client';
+    } else { showError(d.message || 'Registration failed'); }
+  } catch(e) { showError('Network error'); }
+}
+</script>
+</body>
+</html>

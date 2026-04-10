@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Kourierwale – Admin Login</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0f172a 0%,#1e3a8a 50%,#1e293b 100%)}
+.wrapper{width:100%;max-width:420px;padding:20px}
+.panel{background:#fff;border-radius:20px;padding:40px;box-shadow:0 25px 60px rgba(0,0,0,.35)}
+.panel-header{text-align:center;margin-bottom:32px}
+.panel-icon{width:72px;height:72px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:2rem;margin:0 auto 14px;background:linear-gradient(135deg,#7c3aed,#2563eb)}
+.panel-header h2{font-size:1.6rem;font-weight:700;color:#0f172a}
+.panel-header p{color:#64748b;font-size:.9rem;margin-top:4px}
+.form-group{margin-bottom:18px}
+label{display:block;font-size:.8rem;font-weight:600;color:#374151;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em}
+input{width:100%;padding:12px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:.9rem;outline:none;transition:.2s;background:#f8fafc}
+input:focus{border-color:#2563eb;background:#fff;box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.btn{width:100%;padding:14px;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;transition:.2s;margin-top:4px;background:linear-gradient(135deg,#7c3aed,#2563eb);color:#fff;letter-spacing:.02em}
+.btn:hover{opacity:.9;transform:translateY(-1px)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.error{background:#fee2e2;color:#991b1b;padding:10px 14px;border-radius:8px;font-size:.82rem;margin-bottom:14px;display:none;border-left:3px solid #dc2626}
+.back-link{text-align:center;margin-top:20px;font-size:.82rem;color:#64748b}
+.back-link a{color:#2563eb;text-decoration:none;font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-icon">🛠️</div>
+      <h2>Admin Login</h2>
+      <p>Kourierwale Admin Panel</p>
+    </div>
+    <div class="error" id="error-msg"></div>
+    <div class="form-group">
+      <label>Admin Email</label>
+      <input type="email" id="email" placeholder="admin@kourierwale.com" autocomplete="username"/>
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="password" placeholder="Enter your password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"/>
+    </div>
+    <button class="btn" id="login-btn" onclick="doLogin()">🔐 Login to Admin Panel</button>
+    <div class="back-link"><a href="/client/login">→ Go to Client Login</a></div>
+  </div>
+</div>
+<script>
+const API = '/api';
+window.onload = () => {
+  const t = localStorage.getItem('admin_token');
+  if (t) window.location.href = '/admin';
+};
+function showError(msg) {
+  const el = document.getElementById('error-msg');
+  el.textContent = msg; el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 5000);
+}
+async function doLogin() {
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  if (!email || !password) { showError('Please enter email and password'); return; }
+  const btn = document.getElementById('login-btn');
+  btn.disabled = true; btn.textContent = 'Logging in...';
+  try {
+    const res = await fetch(`${API}/auth/login`, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ email, password })
+    });
+    const d = await res.json();
+    if (d.success && d.user.role === 'admin') {
+      localStorage.setItem('admin_token', d.token);
+      localStorage.setItem('admin_user', JSON.stringify(d.user));
+      window.location.href = '/admin';
+    } else if (d.success && d.user.role !== 'admin') {
+      showError('This account does not have admin access. Use Client Login.');
+    } else {
+      showError(d.message || 'Invalid email or password');
+    }
+  } catch(e) { showError('Network error. Please try again.'); }
+  btn.disabled = false; btn.textContent = '🔐 Login to Admin Panel';
+}
+</script>
+</body>
+</html>

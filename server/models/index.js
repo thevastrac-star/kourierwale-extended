@@ -5,10 +5,10 @@ const WalletTransactionSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   type: { type: String, enum: ['credit', 'debit'], required: true },
   amount: { type: Number, required: true },
-  balance: { type: Number },          // balance after transaction
+  balance: { type: Number },
   description: { type: String },
-  reference: { type: String },        // order ID or recharge ID
-  performedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },  // admin who did it
+  reference: { type: String },
+  performedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   createdAt: { type: Date, default: Date.now }
 });
 const WalletTransaction = mongoose.model('WalletTransaction', WalletTransactionSchema);
@@ -43,23 +43,44 @@ const CourierSchema = new mongoose.Schema({
 });
 const Courier = mongoose.model('Courier', CourierSchema);
 
-// ─── SHIPPING RATE ────────────────────────────────────────────────────────────
+// ─── SHIPPING RATE SLAB ───────────────────────────────────────────────────────
+// Per-client per-courier zone rates
 const ShippingRateSchema = new mongoose.Schema({
   courier: { type: mongoose.Schema.Types.ObjectId, ref: 'Courier', required: true },
-  zone: { type: String },               // e.g. "within_city", "metro", "national"
+  // null user = default/global rate; set user = per-client rate
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+  slabName: { type: String, default: 'Standard' },   // slab label e.g. "Slab A"
+  // Zone rates: A,B,C,D,E
+  zones: {
+    a: { type: Number, default: 0 },  // within city
+    b: { type: Number, default: 0 },  // metro to metro
+    c: { type: Number, default: 0 },  // metro to non-metro
+    d: { type: Number, default: 0 },  // national standard
+    e: { type: Number, default: 0 }   // remote / special
+  },
+  // Weight slabs
   minWeight: { type: Number, default: 0 },
-  maxWeight: { type: Number },
-  baseRate: { type: Number, required: true },
-  ratePerKg: { type: Number, default: 0 },
-  codCharge: { type: Number, default: 0 },
+  maxWeight: { type: Number, default: 0.5 },
+  additionalWeightRate: { type: Number, default: 0 }, // per additional 500g or kg
+  // COD charges
+  cod: {
+    type: { type: String, enum: ['flat', 'percent'], default: 'flat' },
+    flat: { type: Number, default: 30 },
+    percent: { type: Number, default: 1.5 },
+    // flat below threshold, percent above
+    thresholdAmount: { type: Number, default: 1500 },
+    // if below threshold → use flat; if above → use percent on full order value
+    mode: { type: String, enum: ['flat_always', 'percent_always', 'threshold'], default: 'threshold' }
+  },
   fuelSurcharge: { type: Number, default: 0 },
   isActive: { type: Boolean, default: true },
   history: [{
-    rate: { type: Number },
     changedAt: { type: Date },
-    changedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+    changedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    snapshot: { type: mongoose.Schema.Types.Mixed }
   }],
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
 });
 const ShippingRate = mongoose.model('ShippingRate', ShippingRateSchema);
 
@@ -67,7 +88,7 @@ const ShippingRate = mongoose.model('ShippingRate', ShippingRateSchema);
 const CourierPreferenceSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   priorities: [{
-    priority: { type: Number },         // 1,2,3
+    priority: { type: Number },
     courier: { type: mongoose.Schema.Types.ObjectId, ref: 'Courier' }
   }],
   updatedAt: { type: Date, default: Date.now }
@@ -144,8 +165,7 @@ const CodReconciliationSchema = new mongoose.Schema({
   settlementDate: { type: Date },
   remarks: { type: String },
   history: [{
-    action: String,
-    amount: Number,
+    action: String, amount: Number,
     performedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     at: { type: Date, default: Date.now }
   }],
@@ -157,7 +177,7 @@ const CodReconciliation = mongoose.model('CodReconciliation', CodReconciliationS
 // ─── NOTIFICATION ─────────────────────────────────────────────────────────────
 const NotificationSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  type: { type: String, enum: ['order_created', 'shipped', 'delivered', 'ndr', 'rto', 'wallet_credit', 'wallet_debit', 'kyc_update', 'ticket_reply'] },
+  type: { type: String },
   channel: { type: String, enum: ['whatsapp', 'email', 'in_app'], default: 'in_app' },
   title: { type: String },
   message: { type: String },
@@ -206,17 +226,7 @@ const BulkUploadSchema = new mongoose.Schema({
 const BulkUpload = mongoose.model('BulkUpload', BulkUploadSchema);
 
 module.exports = {
-  WalletTransaction,
-  WalletRecharge,
-  Courier,
-  ShippingRate,
-  CourierPreference,
-  Warehouse,
-  SupportTicket,
-  NDR,
-  CodReconciliation,
-  Notification,
-  ActivityLog,
-  Settings,
-  BulkUpload
+  WalletTransaction, WalletRecharge, Courier, ShippingRate,
+  CourierPreference, Warehouse, SupportTicket, NDR,
+  CodReconciliation, Notification, ActivityLog, Settings, BulkUpload
 };

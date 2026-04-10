@@ -31,10 +31,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // ─── FRONTEND ROUTES ──────────────────────────────────────────────────────────
 // These let users visit clean URLs like /admin, /client, /login
-app.get('/',        (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
-app.get('/login',   (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
-app.get('/admin',   (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'index.html')));
-app.get('/client',  (req, res) => res.sendFile(path.join(__dirname, 'public', 'client', 'index.html')));
+app.get('/',              (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
+app.get('/login',         (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
+app.get('/admin/login',   (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'login.html')));
+app.get('/client/login',  (req, res) => res.sendFile(path.join(__dirname, 'public', 'client', 'login.html')));
+app.get('/admin',         (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'index.html')));
+app.get('/client',        (req, res) => res.sendFile(path.join(__dirname, 'public', 'client', 'index.html')));
 
 // ─── API ROUTES ───────────────────────────────────────────────────────────────
 app.use('/api/auth',          require('./routes/auth'));
