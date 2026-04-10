@@ -190,7 +190,11 @@ router.get('/', protect, async (req, res) => {
     if (req.user.role !== 'admin') filter.user = req.user._id;
     else if (req.query.userId) filter.user = req.query.userId;
 
-    if (req.query.status) filter.status = req.query.status;
+    if (req.query.status) {
+      // Support comma-separated statuses e.g. "draft,processing"
+      const statuses = req.query.status.split(',').map(s => s.trim()).filter(Boolean);
+      filter.status = statuses.length === 1 ? statuses[0] : { $in: statuses };
+    }
     if (req.query.source) filter.source = req.query.source;
     if (req.query.paymentMode) filter.paymentMode = req.query.paymentMode;
     if (req.query.from || req.query.to) {
@@ -332,6 +336,56 @@ router.patch('/:id/ship', protect, async (req, res) => {
 
     const populated = await Order.findById(order._id).populate('assignedCourier', 'name code');
     res.json({ success: true, order: populated, shippingCharge });
+  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+});
+
+// POST /api/orders/:id/cancel-shipment  – client cancels a shipped order → refund to wallet + reset to processing
+router.post('/:id/cancel-shipment', protect, async (req, res) => {
+  try {
+    const order = await Order.findOne({ _id: req.params.id, user: req.user._id });
+    if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+
+    // Only allow cancel if order is shipped / in_transit (not delivered/rto)
+    const cancellableStatuses = ['shipped', 'processing'];
+    if (!cancellableStatuses.includes(order.status)) {
+      return res.status(400).json({ success: false, message: `Cannot cancel order with status: ${order.status}. Only shipped or processing orders can be cancelled.` });
+    }
+
+    const refundAmount = order.shippingCharge || 0;
+
+    // Refund shipping charge to wallet if it was deducted
+    if (refundAmount > 0 && order.walletDeducted) {
+      await User.findByIdAndUpdate(req.user._id, { $inc: { walletBalance: refundAmount } });
+      // Log wallet transaction
+      const { WalletTransaction } = require('../models/index');
+      const user = await User.findById(req.user._id);
+      await WalletTransaction.create({
+        user: req.user._id,
+        type: 'credit',
+        amount: refundAmount,
+        balanceAfter: (user.walletBalance),
+        description: `Refund for cancelled shipment: ${order.orderId} (AWB: ${order.awbNumber || 'N/A'})`,
+        reference: order._id
+      });
+    }
+
+    // Reset order: remove AWB, reset status to processing so it appears back in My Orders
+    order.status = 'processing';
+    order.awbNumber = null;
+    order.walletDeducted = false;
+    order.cancelledAt = new Date();
+    order.cancellationReason = req.body.reason || 'Cancelled by client';
+    await order.save();
+
+    await logActivity(req.user._id, 'client', 'CANCEL_SHIPMENT', 'Order', order._id,
+      { refundAmount, reason: order.cancellationReason }, req.ip);
+
+    res.json({
+      success: true,
+      message: `Shipment cancelled. ₹${refundAmount} refunded to your wallet.`,
+      refundAmount,
+      order
+    });
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 });
 
