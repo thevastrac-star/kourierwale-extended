@@ -908,7 +908,7 @@ select option{background:#12122A}
 <div id="toast"></div>
 
 <script>
-const API = '/api';  // Served from same server — works on localhost and Render
+const API = 'https://kourierwale.onrender.com/api';  // Backend on Render
 
 let token = localStorage.getItem('admin_token');
 let currentUser = JSON.parse(localStorage.getItem('admin_user') || '{}');
@@ -916,15 +916,15 @@ let walletTargetUserId = null;
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 window.onload = async () => {
-  if (!token) { window.location.href = '/admin/login'; return; }
+  if (!token) { window.location.href = 'login.html'; return; }
   // Verify token is valid and user is actually admin
   try {
-    const res = await fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + token } });
+    const res = await fetch(API + '/auth/me', { headers: { 'Authorization': 'Bearer ' + token } });
     const data = await res.json();
     if (!data.success || data.user.role !== 'admin') {
       localStorage.removeItem('admin_token');
       localStorage.removeItem('admin_user');
-      window.location.href = '/admin/login';
+      window.location.href = 'login.html';
       return;
     }
     currentUser = data.user;
@@ -1821,7 +1821,7 @@ function renderPagination(containerId, current, total, onClick) {
 function logout() {
   localStorage.removeItem('admin_token');
   localStorage.removeItem('admin_user');
-  window.location.href = '/admin/login';
+  window.location.href = 'login.html';
 }
 // Close modals on overlay click
 document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); }));

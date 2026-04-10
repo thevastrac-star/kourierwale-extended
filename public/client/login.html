@@ -235,7 +235,7 @@ input:focus{background:rgba(255,255,255,.1);border-color:#FF6B3570;box-shadow:0 
 const API = 'https://kourierwale.onrender.com/api';
 
 window.onload = () => {
-  if (localStorage.getItem('client_token')) window.location.href = '/client';
+  if (localStorage.getItem('client_token')) window.location.href = 'index.html';
   spawnParticles();
 };
 
@@ -272,7 +272,7 @@ async function doLogin(){
     if(d.success && d.user.role === 'client'){
       localStorage.setItem('client_token', d.token);
       localStorage.setItem('client_user', JSON.stringify(d.user));
-      window.location.href = '/client';
+      window.location.href = 'index.html';
     } else if(d.success && d.user.role !== 'client'){
       showErr('❌ Access denied. This account is not authorized here.');
     } else {
@@ -302,7 +302,7 @@ async function doRegister(){
     if(d.success){
       localStorage.setItem('client_token', d.token);
       localStorage.setItem('client_user', JSON.stringify(d.user));
-      window.location.href = '/client';
+      window.location.href = 'index.html';
     } else { showErr('❌ ' + (d.message || 'Registration failed')); }
   } catch(e){ showErr('🔌 Network error'); }
 }

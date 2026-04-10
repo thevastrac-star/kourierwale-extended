@@ -827,7 +827,7 @@ select option{background:#0C0F1E}
 </div>
 
 <script>
-const API = '/api';
+const API = 'https://kourierwale.onrender.com/api';
 let token = localStorage.getItem('client_token');
 let currentUser = JSON.parse(localStorage.getItem('client_user') || '{}');
 let ordersPage = 1;
@@ -843,7 +843,7 @@ let somCurrentOrder = null;
 
 // ─── INIT ──────────────────────────────────────────────────────────────────────
 window.onload = async () => {
-  if (!token) { window.location.href = '/client/login'; return; }
+  if (!token) { window.location.href = 'login.html'; return; }
   // Verify token
   try {
     const r = await fetch(`${API}/auth/me`, { headers: { Authorization: 'Bearer '+token } });
@@ -1602,7 +1602,7 @@ function renderPagination(containerId, current, total, onClick) {
     btn.textContent=i;btn.onclick=()=>onClick(i);el.appendChild(btn);
   }
 }
-function logout() { localStorage.removeItem('client_token'); localStorage.removeItem('client_user'); window.location.href='/client/login'; }
+function logout() { localStorage.removeItem('client_token'); localStorage.removeItem('client_user'); window.location.href='login.html'; }
 
 // Close modals on overlay click
 document.querySelectorAll('.modal').forEach(m => m.addEventListener('click', e => { if(e.target===m) m.classList.remove('open'); }));

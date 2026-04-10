@@ -166,7 +166,7 @@ input:focus{background:rgba(124,58,237,.12);border-color:#7C3AED80;box-shadow:0 
 const API = 'https://kourierwale.onrender.com/api';
 
 window.onload = () => {
-  if (localStorage.getItem('admin_token')) window.location.href = '/admin';
+  if (localStorage.getItem('admin_token')) window.location.href = 'index.html';
 };
 
 function showErr(msg){
@@ -191,7 +191,7 @@ async function doLogin(){
     if(d.success && d.user.role === 'admin'){
       localStorage.setItem('admin_token', d.token);
       localStorage.setItem('admin_user', JSON.stringify(d.user));
-      window.location.href = '/admin';
+      window.location.href = 'index.html';
     } else if(d.success){
       showErr('❌ Access denied. Insufficient privileges.');
     } else {
